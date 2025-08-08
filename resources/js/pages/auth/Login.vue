@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
+import ConnectWithTwitch from '@/components/ConnectWithTwitch.vue';
 
 defineProps<{
     status?: string;
@@ -82,6 +83,7 @@ const submit = () => {
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
                     Log in
                 </Button>
+                <ConnectWithTwitch class="w-full" redirect="http://localhost:8000/auth/twitch/redirect" fill />
             </div>
 
             <div class="text-center text-sm text-muted-foreground">

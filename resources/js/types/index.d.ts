@@ -29,6 +29,9 @@ export interface User {
     id: number;
     name: string;
     email: string;
+    auth_provider: 'twitch' | null;
+    auth_provider_id: string | null;
+    avatar_url: string | null;
     avatar?: string;
     email_verified_at: string | null;
     created_at: string;

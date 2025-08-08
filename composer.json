@@ -14,7 +14,9 @@
         "inertiajs/inertia-laravel": "^2.0",
         "laravel/framework": "^12.0",
         "laravel/octane": "^2.12",
+        "laravel/socialite": "^5.23",
         "laravel/tinker": "^2.10.1",
+        "socialiteproviders/twitch": "^5.4",
         "tightenco/ziggy": "^2.4"
     },
     "require-dev": {
@@ -63,6 +65,14 @@
         "dev": [
             "Composer\\Config::disableProcessTimeout",
             "bunx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"npm run dev\" --names=server,queue,logs,vite --kill-others"
+        ],
+        "dev:octane": [
+            "Composer\\Config::disableProcessTimeout",
+            "CADDY_SERVER_EXTRA_DIRECTIVES='@devtoolsjson path /.well-known/appspecific/com.chrome.devtools.json reverse_proxy @devtoolsjson localhost:5173' php artisan octane:start --watch --host=localhost"
+        ],
+        "debug:octane": [
+            "Composer\\Config::disableProcessTimeout",
+            "CADDY_SERVER_EXTRA_DIRECTIVES='@devtoolsjson path /.well-known/appspecific/com.chrome.devtools.json reverse_proxy @devtoolsjson localhost:5173' frankenphp php-cli -dxdebug.mode=debug -dxdebug.start_with_request=yes -dxdebug.client_host=127.0.0.1 -dxdebug.client_port=9003 artisan octane:start --watch --host=localhost"
         ],
         "dev:ssr": [
             "bun run build:ssr",

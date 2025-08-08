@@ -39,7 +39,6 @@ export function useLang() {
         const segments = key.split('.')
 
         let current: any = page.props.lang
-        console.log(current);
 
         for (const segment of segments) {
             if (typeof current !== 'object' || current === null) return undefined
