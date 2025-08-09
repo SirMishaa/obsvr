@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import AppLayout from '@/layouts/AppLayout.vue';
 import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { type BreadcrumbItem, type User } from '@/types';
+import { computed } from 'vue';
 
 interface Props {
     mustVerifyEmail: boolean;
@@ -27,6 +28,9 @@ const breadcrumbItems: BreadcrumbItem[] = [
 
 const page = usePage();
 const user = page.props.auth.user as User;
+const formatedProvider = computed(() => {
+    return user.auth_provider && user.auth_provider_id ? `${user.auth_provider} | ${user.auth_provider_id}` : 'N/A';
+});
 
 const form = useForm({
     name: user.name,
@@ -67,6 +71,11 @@ const submit = () => {
                             placeholder="Email address"
                         />
                         <InputError class="mt-2" :message="form.errors.email" />
+                    </div>
+
+                    <div class="grid cursor-not-allowed gap-2">
+                        <Label for="auth_provider">Authentication Provider</Label>
+                        <Input id="auth_provider" class="muted mt-1 block w-full" :model-value="formatedProvider" readonly disabled />
                     </div>
 
                     <div v-if="mustVerifyEmail && !user.email_verified_at">
