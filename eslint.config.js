@@ -7,10 +7,14 @@ export default defineConfigWithVueTs(
     vue.configs['flat/essential'],
     vueTsConfigs.recommended,
     {
-        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js', 'resources/js/components/ui/*'],
+        ignores: ['vendor', 'node_modules', 'public', 'bootstrap/ssr', 'tailwind.config.js'],
     },
     {
         rules: {
+            /*'@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+            'no-unused-vars': ['error', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],*/
+            'no-unused-vars': 'off',
+            '@typescript-eslint/no-unused-vars': 'off',
             'vue/multi-word-component-names': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
         },
