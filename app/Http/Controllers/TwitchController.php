@@ -17,7 +17,7 @@ class TwitchController extends Controller
 
         return Inertia::render('Twitch', [
             'redirect' => route('socialite.redirect', ['provider' => 'twitch']),
-            'followedStreamers' => $followedStreamers->toArray(),
+            'followedStreamers' => $followedStreamers->data->toArray(),
         ]);
     }
 }
