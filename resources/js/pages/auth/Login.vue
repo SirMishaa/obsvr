@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import ConnectWithTwitch from '@/components/ConnectWithTwitch.vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
 import { Button } from '@/components/ui/button';
@@ -6,13 +7,14 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
+import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
-import ConnectWithTwitch from '@/components/ConnectWithTwitch.vue';
+import { computed } from 'vue';
 
 defineProps<{
     status?: string;
     canResetPassword: boolean;
+    errors?: { provider?: string };
 }>();
 
 const form = useForm({
@@ -20,6 +22,14 @@ const form = useForm({
     password: '',
     remember: false,
 });
+
+const page = usePage();
+
+const pageError = computed(() => page.props.errors);
+const providerError = computed(() => ({
+    provider: page.props.errors && 'provider' in page.props.errors,
+    message: page.props.errors?.provider,
+}));
 
 const submit = () => {
     form.post(route('login'), {
@@ -34,6 +44,10 @@ const submit = () => {
 
         <div v-if="status" class="mb-4 text-center text-sm font-medium text-green-600">
             {{ status }}
+        </div>
+
+        <div v-if="providerError.provider" class="mb-4 rounded-lg bg-red-500 p-2 text-center text-sm font-medium text-white">
+            An error occurred while logging in with auth provider {{ page.props.errors }}.
         </div>
 
         <form @submit.prevent="submit" class="flex flex-col gap-6">

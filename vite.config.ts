@@ -1,9 +1,9 @@
+import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
-import vueDevTools from 'vite-plugin-vue-devtools'
 import { defineConfig } from 'vite';
 import devtoolsJson from 'vite-plugin-devtools-json';
+import vueDevTools from 'vite-plugin-vue-devtools';
 
 export default defineConfig({
     plugins: [
@@ -22,10 +22,10 @@ export default defineConfig({
             },
         }),
         vueDevTools({
-            launchEditor: "phpstorm",
+            launchEditor: 'phpstorm',
             componentInspector: true,
         }),
         /** For chrome workspace automatic discovery */
-        devtoolsJson()
+        devtoolsJson(),
     ],
 });

@@ -38,6 +38,8 @@ class User extends Authenticatable
     protected $hidden = [
         'password',
         'remember_token',
+        'auth_provider_access_token',
+        'auth_provider_refresh_token',
     ];
 
     /**
@@ -51,6 +53,9 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'auth_provider' => \App\Enums\AuthProvider::class,
+            'auth_provider_access_token' => 'encrypted',
+            'auth_provider_refresh_token' => 'encrypted',
+            'auth_provider_expires_at' => 'immutable_datetime',
         ];
     }
 }
