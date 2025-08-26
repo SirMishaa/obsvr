@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Data\TwitchFollowedChannelsData;
 use App\Data\TwitchFollowedChannelsPaginatedResponse;
+use App\Data\TwitchStreamPaginatedResponse;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
@@ -54,6 +54,86 @@ readonly class TwitchApiClient
         });
 
         return TwitchFollowedChannelsPaginatedResponse::from($payload);
+    }
+
+    public function getStatusOfFollowedStreamers(string $userId, string $token, int $ttlFromNow = 3600): TwitchStreamPaginatedResponse
+    {
+        $cacheKey = sprintf('twitch.followed_streams.%s', $userId);
+        $ttl = Carbon::now()->addSeconds($ttlFromNow)->timestamp;
+
+        /**
+         * @var array{
+         *   data: array<int, array{
+         *     id: string,
+         *     user_id: string,
+         *     user_login: string,
+         *     user_name: string,
+         *     game_id: string,
+         *     game_name: string,
+         *     type: string,
+         *     title: string,
+         *     viewer_count: int,
+         *     started_at: string,
+         *     language: string,
+         *     thumbnail_url: string,
+         *     tag_ids: array<int, string>,
+         *     tags: array<int, string>,
+         *     is_mature: bool
+         *   }>,
+         *   pagination: array{cursor?: string}
+         * } $response
+         */
+        $response = Cache::remember($cacheKey, $ttl, function () use ($userId, $token) {
+            Log::debug('[TwitchAPI] cache MISS for followed_streams', ['userId' => $userId]);
+            $url = $this->baseUrl
+                ->withPath('/helix/streams/followed')
+                ->withQuery(['user_id' => $userId]);
+
+            return $this->handleResponse($this->getHttpClient($token), $url);
+        });
+
+        return TwitchStreamPaginatedResponse::from($response);
+    }
+
+    /**
+     * Retrieves the streaming status of a specific user.
+     *
+     * @param  string  $userId  The ID of the user whose streaming status is being fetched.
+     * @param  string  $token  The authentication token used for the API request.
+     * @return TwitchStreamPaginatedResponse Returns the paginated response containing the user's streaming data.
+     */
+    public function getStatusOfStreamer(string $userId, string $token): TwitchStreamPaginatedResponse
+    {
+        $url = $this->baseUrl
+            ->withPath('/helix/streams')
+            ->withQuery(['user_id' => $userId]);
+
+        /**
+         * @var array{
+         *   data: array<int, array{
+         *     id: string,
+         *     user_id: string,
+         *     user_login: string,
+         *     user_name: string,
+         *     game_id: string,
+         *     game_name: string,
+         *     type: string,
+         *     title: string,
+         *     viewer_count: int,
+         *     started_at: string,
+         *     language: string,
+         *     thumbnail_url: string,
+         *     tag_ids: array<int, string>,
+         *     tags: array<int, string>,
+         *     is_mature: bool
+         *   }>,
+         *   pagination: array{cursor?: string}
+         * } $response
+         */
+        $response = $this->handleResponse($this->getHttpClient($token), $url);
+
+        return TwitchStreamPaginatedResponse::from($response);
+
     }
 
     /**
