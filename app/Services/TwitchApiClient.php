@@ -44,7 +44,7 @@ readonly class TwitchApiClient
     {
         $cacheKey = sprintf('twitch.followed_channels.%s', $userId);
 
-        $ttl = Carbon::now()->addSeconds($ttlFromNow)->timestamp;
+        $ttl = Carbon::now()->addSeconds($ttlFromNow);
 
         $payload = Cache::remember($cacheKey, $ttl, function () use ($userId, $token) {
             Log::debug('[TwitchAPI] cache MISS for followed_channels', ['userId' => $userId]);
@@ -59,7 +59,7 @@ readonly class TwitchApiClient
     public function getStatusOfFollowedStreamers(string $userId, string $token, int $ttlFromNow = 3600): TwitchStreamPaginatedResponse
     {
         $cacheKey = sprintf('twitch.followed_streams.%s', $userId);
-        $ttl = Carbon::now()->addSeconds($ttlFromNow)->timestamp;
+        $ttl = Carbon::now()->addSeconds($ttlFromNow);
 
         /**
          * @var array{
