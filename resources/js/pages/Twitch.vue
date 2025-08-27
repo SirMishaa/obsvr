@@ -3,7 +3,7 @@ import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { Head, router } from '@inertiajs/vue3';
-import { onMounted } from 'vue';
+import { onMounted, ref } from 'vue';
 
 interface FollowedStreamer {
     broadcasterId: string;
@@ -44,6 +44,8 @@ const props = defineProps<{
     /** List of 'userId' streamers that has been marked as favorites */
     favoriteStreamers: string[];
 }>();
+const countdown = ref<number>(180);
+const cacheBust = ref<string>('');
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -58,10 +60,27 @@ const breadcrumbs: BreadcrumbItem[] = [
 
 onMounted(() => {
     if (import.meta.env.DEV) console.log('Given redirect uri %s', props.redirect);
+    countdown.value = 120;
+    const countdownInterval = setInterval(() => {
+        countdown.value--;
+        if (countdown.value <= 0) {
+            countdown.value = 120;
+            cacheBust.value = String(Date.now());
+            router.reload({
+                only: ['statusOfFollowedStreamers', 'favoriteStreamers'],
+            });
+        }
+    }, 1000);
 });
 
-const formatTwitchThumbnailUrl = (url: string, width: number, height: number): string => {
-    return url.replace('{width}', width.toString()).replace('{height}', height.toString());
+const formatTwitchThumbnailUrl = (url: string, width: number, height: number): URL => {
+    const fullUrl = url.replace('{width}', width.toString()).replace('{height}', height.toString());
+    const formattedUrl = new URL(fullUrl);
+
+    /** Add cache busting query parameter to avoid image caching */
+    if (cacheBust.value) formattedUrl.searchParams.set('cb', cacheBust.value);
+
+    return formattedUrl;
 };
 
 const redirectToTwitch = (username: string) => {
@@ -115,9 +134,12 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
             </div>
         </div>-->
 
-        <h1 class="mt-6 mb-2 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
+        <h1 class="mt-6 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
+        <h2 class="px-4 text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
         <div>
-            <section class="card-inner grid grid-cols-1 gap-x-4 gap-y-6 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+            <section
+                class="card-inner grid grid-cols-1 gap-x-4 gap-y-6 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8"
+            >
                 <div
                     v-for="streamer in props.statusOfFollowedStreamers"
                     :key="streamer.userId"
@@ -130,7 +152,11 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
                 >
                     <div class="relative h-28">
                         <img
-                            :src="streamer.thumbnailUrl ? formatTwitchThumbnailUrl(streamer.thumbnailUrl, 480, 270) : 'http://placebeard.it/640/480'"
+                            :src="
+                                streamer.thumbnailUrl
+                                    ? formatTwitchThumbnailUrl(streamer.thumbnailUrl, 480, 270).toString()
+                                    : 'http://placebeard.it/640/480'
+                            "
                             :alt="streamer.userName"
                             class="h-full w-full object-cover"
                         />
