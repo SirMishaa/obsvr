@@ -2,7 +2,7 @@
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { Head } from '@inertiajs/vue3';
+import { Head, router } from '@inertiajs/vue3';
 import { onMounted } from 'vue';
 
 interface FollowedStreamer {
@@ -74,6 +74,29 @@ const formatRelativeDate = (startedAt: string) => {
         'minute',
     );
 };
+
+const toggleFavoriteStreamerRework = async (streamerId: string) => {
+    try {
+        router.post(
+            route('twitch.favorite', streamerId),
+            {},
+            {
+                preserveScroll: true,
+                preserveState: true,
+                replace: true,
+                onError: (errors) => console.error('Toggle favorite failed', errors),
+                onFinish: () => {
+                    console.log('Toggling favorite streamer for userId %s', streamerId);
+                    /*favoriteStreamersComp.value.includes(streamerId)
+                        ? favoriteStreamersComp.value.splice(favoriteStreamersComp.value.indexOf(streamerId), 1)
+                        : favoriteStreamersComp.value.push(streamerId);*/
+                },
+            },
+        );
+    } catch (e) {
+        console.error('Unexpected error while toggling favorite', e);
+    }
+};
 </script>
 
 <template>
@@ -98,7 +121,8 @@ const formatRelativeDate = (startedAt: string) => {
                 <div
                     v-for="streamer in props.statusOfFollowedStreamers"
                     :key="streamer.userId"
-                    @click="() => redirectToTwitch(streamer.userName)"
+                    @click.exact="() => redirectToTwitch(streamer.userName)"
+                    @click.ctrl="() => toggleFavoriteStreamerRework(streamer.userId)"
                     class="flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
                     :class="{
                         'favorite-border': props.favoriteStreamers.includes(streamer.userId),

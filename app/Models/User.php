@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -57,5 +58,13 @@ class User extends Authenticatable
             'auth_provider_refresh_token' => 'encrypted',
             'auth_provider_expires_at' => 'immutable_datetime',
         ];
+    }
+
+    /**
+     * @return HasMany<FavouriteStreamer>
+     */
+    public function favouriteStreamers(): HasMany
+    {
+        return $this->hasMany(FavouriteStreamer::class);
     }
 }

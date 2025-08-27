@@ -20,7 +20,14 @@ Route::get('dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::get('twitch', [TwitchController::class, 'index'])->middleware(['auth', 'verified'])->name('twitch');
+Route::prefix('twitch')->group(function () {
+    Route::get('/', [TwitchController::class, 'index'])
+        ->middleware(['auth', 'verified'])
+        ->name('twitch');
+    Route::post('favorite/{streamerId}', [TwitchController::class, 'toggleFavoriteStreamer'])
+        ->name('twitch.favorite')
+        ->middleware(['auth', 'verified']);
+});
 
 Route::prefix('auth/{provider}')
     ->where(['provider' => 'twitch'])
