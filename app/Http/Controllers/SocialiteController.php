@@ -95,7 +95,7 @@ class SocialiteController extends Controller
                 'auth_provider_access_token' => $user->token,
                 'auth_provider_refresh_token' => $user->refreshToken,
                 /** TTL (Time to Live) in seconds given before expiration, that's why we use `addSeconds` */
-                'auth_provider_expires_at' => $user->expiresIn ? now()->addSeconds($user->expiresIn) : null,
+                'auth_provider_expires_at' => $user->expiresIn ? now()->utc()->addSeconds($user->expiresIn) : null,
             ])->save();
 
         } catch (UniqueConstraintViolationException) {

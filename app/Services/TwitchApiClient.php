@@ -4,6 +4,8 @@ namespace App\Services;
 
 use App\Data\TwitchFollowedChannelsPaginatedResponse;
 use App\Data\TwitchStreamPaginatedResponse;
+use App\Exceptions\TwitchApiException;
+use App\Exceptions\TwitchUnauthorizedException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
@@ -11,7 +13,6 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Uri;
 use RuntimeException;
 
@@ -21,11 +22,13 @@ readonly class TwitchApiClient
 
     protected Uri $baseUrl;
 
+    protected Uri $authUrl;
+
     public function __construct()
     {
-        URL::formatRoot(config('services.twitch.base_url'));
         $this->clientId = config('services.twitch.client_id');
         $this->baseUrl = config('services.twitch.base_url') ? Uri::of(config('services.twitch.base_url')) : null;
+        $this->authUrl = config('services.twitch.auth_url') ? Uri::of(config('services.twitch.auth_url')) : null;
 
         if (empty($this->clientId) || empty($this->baseUrl)) {
             throw new RuntimeException('Twitch API client ID or base URL is not configured.');
@@ -92,6 +95,8 @@ readonly class TwitchApiClient
             return $this->handleResponse($this->getHttpClient($token), $url);
         });
 
+        // Dispatch a job to send notifications
+
         return TwitchStreamPaginatedResponse::from($response);
     }
 
@@ -133,6 +138,23 @@ readonly class TwitchApiClient
         $response = $this->handleResponse($this->getHttpClient($token), $url);
 
         return TwitchStreamPaginatedResponse::from($response);
+
+    }
+
+    public function createSubscription(string $userId, string $token, string $eventType = 'stream.online'): void
+    {
+        $url = $this->baseUrl
+            ->withPath('/helix/eventsub/subscriptions')
+            ->withQuery(['type' => $eventType, 'version' => '1']);
+
+        $response = $this->handleResponse($this->getHttpClient($token), $url, 'POST', [
+            'type' => $eventType,
+            'version' => '1',
+            'transport' => [
+                'method' => 'webhook',
+                'callback' => config('services.twitch.eventsub_callback_url'),
+            ],
+        ]);
 
     }
 
@@ -222,13 +244,22 @@ readonly class TwitchApiClient
 
     /**
      * Handle the response from the Twitch API.
+     *
+     * @param  PendingRequest  $pendingRequestOrClient  The HTTP client instance
+     * @param  Uri  $uri  The URI to send the request to
+     * @param  string  $method  The HTTP method to use (GET or POST)
+     * @param  array<string, mixed>  $data  Optional data to send with the request
+     * @return array<string, mixed> The JSON response as an array
      */
-    private function handleResponse(PendingRequest $pendingRequestOrClient, Uri $uri): array
+    private function handleResponse(PendingRequest $pendingRequestOrClient, Uri $uri, string $method = 'GET', array $data = []): array
     {
         try {
-            $response = $pendingRequestOrClient->get($uri);
-            if ($response->failed()) {
+            $response = match (strtoupper($method)) {
+                'POST' => $pendingRequestOrClient->post($uri, $data),
+                default => $pendingRequestOrClient->get($uri),
+            };
 
+            if ($response->failed()) {
                 $message = sprintf(
                     'Failed to fetch data from Twitch API: (%s) %s',
                     $response->status(),
@@ -241,15 +272,56 @@ readonly class TwitchApiClient
                     'response' => $response->body(),
                 ]);
 
-                throw new RuntimeException($message);
+                // Handle response = 401
+
+                if ($response->status() === 401) {
+                    throw new TwitchUnauthorizedException('Unauthorized: Invalid or expired token');
+                }
+
+                throw new TwitchApiException($message);
             }
 
             return $response->json();
 
         } catch (ConnectionException $connectionException) {
-            throw new RuntimeException('Failed to connect to Twitch API: '.$connectionException->getMessage());
+            throw new TwitchApiException('Failed to connect to Twitch API: '.$connectionException->getMessage(), previous: $connectionException);
         } catch (Exception $exception) {
-            throw new RuntimeException($exception->getMessage());
+            if ($exception instanceof TwitchApiException) {
+                throw $exception;
+            }
+            throw new TwitchApiException($exception->getMessage(), previous: $exception);
+        }
+    }
+
+    /**
+     * Validates an OAuth2 token to ensure it is still active and meets the minimum validity duration.
+     *
+     * @param  string  $token  The OAuth2 token to be validated.
+     * @param  int  $minValidity  The minimum number of seconds the token should remain valid. Default is 120 seconds.
+     * @return bool Returns true if the token is valid and meets the minimum validity, false otherwise.
+     */
+    public function verifyTokenValidity(string $token, int $minValidity = 120): bool
+    {
+        $url = $this->authUrl->withPath('/oauth2/validate');
+        try {
+            /**
+             * @var array{
+             *     client_id: string,
+             *     login: string,
+             *     user_id: string,
+             *     scopes: array<int, string>,
+             *     expires_in: int,
+             * } $response
+             */
+            $response = $this->handleResponse($this->getHttpClient($token), $url);
+            $expiresIn = $response['expires_in'] ?? 0;
+            if ($expiresIn < $minValidity) {
+                return false;
+            }
+
+            return true;
+        } catch (TwitchUnauthorizedException) {
+            return false;
         }
     }
 }
