@@ -2,8 +2,9 @@
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
+import { levenshteinDistance } from '@/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { onMounted, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 
 interface FollowedStreamer {
     broadcasterId: string;
@@ -46,6 +47,30 @@ const props = defineProps<{
 }>();
 const countdown = ref<number>(180);
 const cacheBust = ref<string>('');
+const inputSearch = ref<string>('');
+
+const statusOfFollowedStreamersComp = computed(() => {
+    if (inputSearch.value)
+        return props.statusOfFollowedStreamers.filter((streamer) => {
+            const streamerName = streamer.userName
+                .normalize('NFD')
+                /** Remove accents and diacritics */
+                .replace(/[\u0300-\u036f]/g, '')
+                /** Replace _ and - with spaces */
+                .replace(/[_-]/g, ' ')
+                .toLowerCase();
+            const searchTerm = inputSearch.value
+                .normalize('NFD')
+                /** Remove accents and diacritics */
+                .replace(/[\u0300-\u036f]/g, '')
+                /** Replace _ and - with spaces */
+                .replace(/[_-]/g, ' ')
+                .toLowerCase();
+
+            return streamerName.includes(searchTerm) || levenshteinDistance(streamerName, searchTerm) <= 2;
+        });
+    return props.statusOfFollowedStreamers;
+});
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -134,14 +159,19 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
             </div>
         </div>-->
 
-        <h1 class="mt-6 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
-        <h2 class="px-4 text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
+        <div class="mt-6 flex items-center justify-between px-4">
+            <div>
+                <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
+                <h2 class="text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
+            </div>
+            <input type="text" placeholder="Rechercher un streamer" class="border-b-2 border-gray-400 focus:outline-none" v-model="inputSearch" />
+        </div>
         <div>
             <section
                 class="card-inner grid grid-cols-1 gap-x-4 gap-y-6 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8"
             >
                 <div
-                    v-for="streamer in props.statusOfFollowedStreamers"
+                    v-for="streamer in statusOfFollowedStreamersComp"
                     :key="streamer.userId"
                     @click.exact="() => redirectToTwitch(streamer.userName)"
                     @click.ctrl="() => toggleFavoriteStreamerRework(streamer.userId)"
