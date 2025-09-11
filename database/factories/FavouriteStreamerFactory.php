@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\TwitchSubscriptionStatus;
 use App\Models\FavouriteStreamer;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,6 +21,7 @@ class FavouriteStreamerFactory extends Factory
             'userId' => User::factory(),
             'streamer_id' => $this->faker->word(),
             'streamer_name' => $this->faker->word(),
+            'subscription_status' => $this->faker->randomElement(TwitchSubscriptionStatus::values()),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
         ];

@@ -2,6 +2,9 @@
 
 namespace App\Models;
 
+use App\Enums\TwitchSubscriptionStatus;
+use App\Observers\UserFavouriteStreamerObserver;
+use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -9,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * @mixin IdeHelperFavouriteStreamer
  */
+#[ObservedBy(UserFavouriteStreamerObserver::class)]
 class FavouriteStreamer extends Model
 {
     use HasFactory;
@@ -17,6 +21,11 @@ class FavouriteStreamer extends Model
         'user_id',
         'streamer_id',
         'streamer_name',
+        'subscription_status',
+    ];
+
+    protected $casts = [
+        'subscription_status' => TwitchSubscriptionStatus::class,
     ];
 
     public function user(): BelongsTo

@@ -40,6 +40,9 @@ return [
         'client_secret' => env('TWITCH_CLIENT_SECRET'),
         'redirect' => env('TWITCH_REDIRECT_URI'),
         'base_url' => env('TWITCH_BASE_URL', 'https://api.twitch.tv'),
+        'auth_url' => env('TWITCH_AUTH_URL', 'https://id.twitch.tv'),
+        'eventsub_callback_url' => env('TWITCH_EVENTSUB_CALLBACK_URL'),
+        'eventsub_secret' => env('TWITCH_EVENTSUB_SECRET'),
     ],
 
 ];
