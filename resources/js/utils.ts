@@ -24,3 +24,19 @@ export function levenshteinDistance(str1: string, str2: string): number {
     }
     return track[str2.length][str1.length];
 }
+
+export function urlBase64ToUint8Array(base64Url: string) {
+    const cleaned = (base64Url || '').trim();
+    let base64 = cleaned.replace(/-/g, '+').replace(/_/g, '/');
+
+    base64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
+    if (base64.length % 4 !== 0) {
+        base64 += '='.repeat(4 - (base64.length % 4));
+    }
+
+    const rawData: string = atob(base64);
+
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i);
+    return outputArray;
+}

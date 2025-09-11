@@ -2,7 +2,7 @@
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
-import { levenshteinDistance } from '@/utils';
+import { levenshteinDistance, urlBase64ToUint8Array } from '@/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { computed, onMounted, ref } from 'vue';
 
@@ -34,16 +34,33 @@ interface FollowedStreamerStream {
     language: string;
 }
 
+interface TwitchEventSubSubscriptionItem {
+    id: string;
+    status: string;
+    type: string; // ex: 'stream.online'
+    version: string; // ex: '1'
+    condition: {
+        broadcaster_user_id?: string | null;
+    };
+    createdAt: string; // ex: '2025-09-09T21:36:47.199265869Z'
+    transport: {
+        method: 'webhook' | 'eventsub';
+        callback: string;
+    };
+    cost: number;
+}
+
 const { __ } = useLang();
 
 const title = __('app.twitch');
 
 const props = defineProps<{
-    redirect: string;
     followedStreamers: FollowedStreamer[];
     statusOfFollowedStreamers: FollowedStreamerStream[];
     /** List of 'userId' streamers that has been marked as favorites */
     favoriteStreamers: string[];
+    vapidPublicKey: string;
+    subscriptions: TwitchEventSubSubscriptionItem[] | null;
 }>();
 const countdown = ref<number>(180);
 const cacheBust = ref<string>('');
@@ -84,7 +101,6 @@ const breadcrumbs: BreadcrumbItem[] = [
 ];
 
 onMounted(() => {
-    if (import.meta.env.DEV) console.log('Given redirect uri %s', props.redirect);
     countdown.value = 120;
     const countdownInterval = setInterval(() => {
         countdown.value--;
@@ -92,7 +108,7 @@ onMounted(() => {
             countdown.value = 120;
             cacheBust.value = String(Date.now());
             router.reload({
-                only: ['statusOfFollowedStreamers', 'favoriteStreamers'],
+                only: ['statusOfFollowedStreamers', 'favoriteStreamers', 'subscriptions'],
             });
         }
     }, 1000);
@@ -119,11 +135,39 @@ const formatRelativeDate = (startedAt: string) => {
     );
 };
 
-const toggleFavoriteStreamerRework = async (streamerId: string) => {
+const enableWebPush = async (vapidPublicKey: string) => {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') console.warn('Permission not granted');
+    const reg = await navigator.serviceWorker.register('/service-worker.js');
+    if (!reg.pushManager) throw new Error('PushManager not supported');
+    const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
+    });
+
+    router.post(
+        route('push.subscription'),
+        {
+            ...sub.toJSON(),
+        },
+        {
+            onFinish: (data) => {
+                console.log('Local subscription saved', data);
+            },
+            onError: (errors) => {
+                console.error('Error saving local subscription', errors);
+            },
+        },
+    );
+};
+
+const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { streamerId: string; streamerName: string }) => {
     try {
         router.post(
             route('twitch.favorite', streamerId),
-            {},
+            {
+                streamerName,
+            },
             {
                 preserveScroll: true,
                 preserveState: true,
@@ -163,6 +207,9 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
                 <h2 class="text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
+                <button @click="() => enableWebPush(props.vapidPublicKey)" class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white">
+                    Activer notification
+                </button>
             </div>
             <input type="text" placeholder="Rechercher un streamer" class="border-b-2 border-gray-400 focus:outline-none" v-model="inputSearch" />
         </div>
@@ -174,7 +221,13 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
                     v-for="streamer in statusOfFollowedStreamersComp"
                     :key="streamer.userId"
                     @click.exact="() => redirectToTwitch(streamer.userName)"
-                    @click.ctrl="() => toggleFavoriteStreamerRework(streamer.userId)"
+                    @click.ctrl="
+                        () =>
+                            toggleFavoriteStreamerRework({
+                                streamerId: streamer.userId,
+                                streamerName: streamer.userName,
+                            })
+                    "
                     class="flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
                     :class="{
                         'favorite-border': props.favoriteStreamers.includes(streamer.userId),
@@ -198,6 +251,23 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
                             <div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
                             LIVE
                         </div>
+                        <div
+                            v-if="props.subscriptions?.some((sub) => sub.condition.broadcaster_user_id === streamer.userId)"
+                            class="absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-1 text-xs text-white"
+                            :class="{
+                                'bg-green-500': props.subscriptions?.some(
+                                    (sub) => sub.condition.broadcaster_user_id === streamer.userId && sub.status === 'enabled',
+                                ),
+                                'bg-orange-500': props.subscriptions?.some(
+                                    (sub) =>
+                                        sub.condition.broadcaster_user_id === streamer.userId &&
+                                        sub.status === 'webhook_callback_verification_failed',
+                                ),
+                            }"
+                        >
+                            <div class="h-2 w-2 animate-pulse rounded-full bg-white text-xs"></div>
+                            RealTime
+                        </div>
                     </div>
                     <div class="px-4 py-6">
                         <div class="space-between flex flex-wrap items-center justify-between">
@@ -216,38 +286,40 @@ const toggleFavoriteStreamerRework = async (streamerId: string) => {
                 </div>
             </section>
         </div>
-        <h1 class="mt-6 mb-2 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis</h1>
-        <section class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
-            <div
-                v-for="streamer in props.followedStreamers"
-                :key="streamer.broadcasterId"
-                class="flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
-            >
-                <div class="relative h-28">
-                    <!--                    <img
-                        :src="streamer._profileImageUrl ?? 'http://placebeard.it/640/480'"
-                        :alt="streamer.broadcasterName"
-                        class="h-full w-full object-cover"
-                    />-->
-                    <div class="absolute top-0 h-28 w-full bg-black object-cover"></div>
-                    <div
-                        v-if="streamer.isLive"
-                        class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
-                    >
-                        <div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
-                        LIVE
+        <template v-if="false">
+            <h1 class="mt-6 mb-2 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis</h1>
+            <section class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+                <div
+                    v-for="streamer in props.followedStreamers"
+                    :key="streamer.broadcasterId"
+                    class="flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
+                >
+                    <div class="relative h-28">
+                        <!--                    <img
+                            :src="streamer._profileImageUrl ?? 'http://placebeard.it/640/480'"
+                            :alt="streamer.broadcasterName"
+                            class="h-full w-full object-cover"
+                        />-->
+                        <div class="absolute top-0 h-28 w-full bg-black object-cover"></div>
+                        <div
+                            v-if="streamer.isLive"
+                            class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
+                        >
+                            <div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
+                            LIVE
+                        </div>
+                    </div>
+                    <div class="p-4">
+                        <h3 class="text-sm font-semibold">{{ streamer.broadcasterName }}</h3>
+                        <div v-if="streamer.isLive" class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                            <p>Playing {{ streamer.game }}</p>
+                            <p>- viewers</p>
+                        </div>
+                        <div v-else class="mt-2 text-xs text-gray-500">Offline</div>
                     </div>
                 </div>
-                <div class="p-4">
-                    <h3 class="text-sm font-semibold">{{ streamer.broadcasterName }}</h3>
-                    <div v-if="streamer.isLive" class="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                        <p>Playing {{ streamer.game }}</p>
-                        <p>- viewers</p>
-                    </div>
-                    <div v-else class="mt-2 text-xs text-gray-500">Offline</div>
-                </div>
-            </div>
-        </section>
+            </section>
+        </template>
     </AppLayout>
 </template>
 
