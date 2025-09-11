@@ -1,7 +1,9 @@
 <?php
 
+use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\TwitchController;
+use App\Http\Controllers\TwitchEventSubController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -39,6 +41,14 @@ Route::prefix('auth/{provider}')
             ->middleware(['guest'])
             ->name('socialite.callback');
     });
+
+Route::post('push/subscribe', [PushSubscriptionController::class, '__invoke'])
+    ->middleware(['auth', 'verified'])
+    ->name('push.subscription');
+
+Route::post('twitch/eventsub', [TwitchEventSubController::class, 'handle'])
+    ->middleware(\App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware::class)
+    ->name('twitch.eventsub');
 
 require __DIR__.'/settings.php';
 require __DIR__.'/auth.php';

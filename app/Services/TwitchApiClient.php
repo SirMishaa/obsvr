@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Data\TwitchEventSubSubscriptionsResponse;
 use App\Data\TwitchFollowedChannelsPaginatedResponse;
 use App\Data\TwitchStreamPaginatedResponse;
 use App\Exceptions\TwitchApiException;
@@ -141,21 +142,81 @@ readonly class TwitchApiClient
 
     }
 
-    public function createSubscription(string $userId, string $token, string $eventType = 'stream.online'): void
+    /**
+     * Creates an EventSub subscription for a specific broadcaster and event type.
+     *
+     * @return array{
+     *   data: array<int, array{
+     *     id: string,
+     *     status: "enabled"|"webhook_callback_verification_pending"|"webhook_callback_verification_failed"|
+     *              "notification_failures_exceeded"|"authorization_revoked"|"user_removed",
+     *     type: string,
+     *     version: string,
+     *     condition: array{broadcaster_user_id: string},
+     *     created_at: string,
+     *     transport: array{method: "webhook", callback: string},
+     *     cost: int
+     *   }>,
+     *   total: int,
+     *   total_cost: int,
+     *   max_total_cost: int
+     * }
+     */
+    public function createSubscription(string $broadcasterId, string $token, string $eventType = 'stream.online'): array
     {
         $url = $this->baseUrl
             ->withPath('/helix/eventsub/subscriptions')
             ->withQuery(['type' => $eventType, 'version' => '1']);
 
-        $response = $this->handleResponse($this->getHttpClient($token), $url, 'POST', [
+        return $this->handleResponse($this->getHttpClient($token), $url, 'POST', [
             'type' => $eventType,
             'version' => '1',
+            'condition' => [
+                'broadcaster_user_id' => $broadcasterId,
+            ],
             'transport' => [
                 'method' => 'webhook',
                 'callback' => config('services.twitch.eventsub_callback_url'),
+                'secret' => config('services.twitch.eventsub_secret'),
             ],
         ]);
+    }
 
+    /**
+     * Retrieves a list of EventSub subscriptions for the specified user or globally.
+     *
+     * @param  string|null  $broadcasterId  The ID of the user to fetch subscriptions for, or null for global subscriptions.
+     * @param  string  $token  The authentication token used for the API request.
+     * @return TwitchEventSubSubscriptionsResponse Returns the response containing EventSub subscriptions.
+     */
+    public function fetchSubscriptions(?string $broadcasterId, string $token): TwitchEventSubSubscriptionsResponse
+    {
+
+        $query = [];
+
+        /**
+         * Twitch API filter is mutually exclusive, so we can only specify one of the following.
+         */
+        if ($broadcasterId) {
+            $query['user_id'] = $broadcasterId;
+        } else {
+            $query['type'] = 'stream.online';
+        }
+
+        $url = $this->baseUrl
+            ->withPath('/helix/eventsub/subscriptions')
+            ->withQuery($query);
+
+        return TwitchEventSubSubscriptionsResponse::from($this->handleResponse($this->getHttpClient($token), $url));
+    }
+
+    public function deleteSubscription(string $subscriptionId, string $token): array
+    {
+        $url = $this->baseUrl
+            ->withPath('/helix/eventsub/subscriptions')
+            ->withQuery(['id' => $subscriptionId]);
+
+        return $this->handleResponse($this->getHttpClient($token), $url, 'DELETE');
     }
 
     /**
@@ -247,7 +308,7 @@ readonly class TwitchApiClient
      *
      * @param  PendingRequest  $pendingRequestOrClient  The HTTP client instance
      * @param  Uri  $uri  The URI to send the request to
-     * @param  string  $method  The HTTP method to use (GET or POST)
+     * @param  "GET"|"POST"|"PUT"|"PATCH"|"DELETE"  $method  The HTTP method to use (default: "GET")
      * @param  array<string, mixed>  $data  Optional data to send with the request
      * @return array<string, mixed> The JSON response as an array
      */
@@ -256,6 +317,9 @@ readonly class TwitchApiClient
         try {
             $response = match (strtoupper($method)) {
                 'POST' => $pendingRequestOrClient->post($uri, $data),
+                'PUT' => $pendingRequestOrClient->put($uri, $data),
+                'PATCH' => $pendingRequestOrClient->patch($uri, $data),
+                'DELETE' => $pendingRequestOrClient->delete($uri, $data),
                 default => $pendingRequestOrClient->get($uri),
             };
 
@@ -281,7 +345,17 @@ readonly class TwitchApiClient
                 throw new TwitchApiException($message);
             }
 
-            return $response->json();
+            try {
+                $formatedResponse = $response->json();
+
+                return $formatedResponse ?? [];
+            } catch (Exception) {
+                if (strtoupper($method) !== 'DELETE') {
+                    Log::warning('Failed to parse JSON response from Twitch API: '.$response->body());
+                }
+
+                return [];
+            }
 
         } catch (ConnectionException $connectionException) {
             throw new TwitchApiException('Failed to connect to Twitch API: '.$connectionException->getMessage(), previous: $connectionException);

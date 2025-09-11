@@ -5,14 +5,19 @@ namespace App\Services;
 use App\Models\User;
 use Error;
 use Exception;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
 use Laravel\Socialite\Facades\Socialite;
+use Laravel\Socialite\Two\Token;
 use Laravel\Socialite\Two\TwitchProvider;
 use Log;
 use Throwable;
 
 class TwitchTokenManagerService
 {
-    const int MIN_TOKEN_VALIDITY_SECONDS = 900;
+    const int MIN_USER_TOKEN_VALIDITY_SECONDS = 900;
+
+    const int MIN_APP_TOKEN_VALIDITY_SECONDS = 3600;
 
     public function __construct() {}
 
@@ -45,7 +50,7 @@ class TwitchTokenManagerService
         /**
          * Token is valid if it is not expired and has at least N MIN minutes of validity.
          */
-        if ($expiresAt?->gt(now()->addSeconds(self::MIN_TOKEN_VALIDITY_SECONDS))) {
+        if ($expiresAt?->gt(now()->addSeconds(self::MIN_USER_TOKEN_VALIDITY_SECONDS))) {
             Log::debug(sprintf('[%s] Access token is still valid for user %s, expiring in %s', self::class, $user->id, $expiresAt->diffForHumans()));
 
             return [
@@ -87,6 +92,34 @@ class TwitchTokenManagerService
             Log::warning('Failed to refresh Twitch tokens for user '.$user->id.': '.$e->getMessage());
             throw $e;
         }
+    }
+
+    public function ensureFreshAppAccessToken(): string
+    {
+        return Cache::remember('twitch_app_access_token', now()->addSeconds(self::MIN_APP_TOKEN_VALIDITY_SECONDS), function () {
+            $clientId = config('services.twitch.client_id');
+            $clientSecret = config('services.twitch.client_secret');
+
+            $response = Http::asForm()
+                ->post('https://id.twitch.tv/oauth2/token', [
+                    'client_id' => $clientId,
+                    'client_secret' => $clientSecret,
+                    'grant_type' => 'client_credentials',
+                ])
+                ->throw()
+                ->json();
+
+            if (empty($response['access_token']) || empty($response['expires_in'])) {
+                throw new Error('Failed to get an app access token from Twitch');
+            }
+
+            $ttl = (int) $response['expires_in'] - self::MIN_APP_TOKEN_VALIDITY_SECONDS;
+            Cache::put('twitch_app_access_token', $response['access_token'], now()->addSeconds($ttl));
+
+            Log::info(sprintf('[%s] Obtained new Twitch App Access Token (expires in %d seconds)', self::class, $response['expires_in']));
+
+            return $response['access_token'];
+        });
     }
 
     private function clearTokens(User $user): void
