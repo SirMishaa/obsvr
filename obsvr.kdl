@@ -1,0 +1,44 @@
+layout {
+  tab name="obsvr" {
+    // Two column : left (3) | right (2)
+    pane split_direction="vertical" {
+      // ===== Left column: 3 stacked panes =====
+      pane split_direction="horizontal" {
+        // 1) Laravel
+        pane {
+          cwd "."
+          command "php"
+          args "artisan" "serve" "--host" "0.0.0.0" "--port" "8000"
+        }
+        // 2) bun dev (Vite)
+        pane {
+          cwd "."
+          command "bun"
+          args "run" "dev"
+        }
+        // 3) cloudflared
+        pane {
+          cwd "."
+          command "cloudflared"
+          args "tunnel" "--config" "./.cloudflared/config.yml" "run" "twitch-webhooks"
+        }
+      }
+
+    // ===== Right column: 2 stacked panes =====
+      pane split_direction="horizontal" {
+        pane {
+          cwd "."
+          command "tspin"
+          args "-f" "storage/logs/laravel.log"
+        }
+        pane {
+          cwd "."
+          command "fish"
+        }
+      }
+    }
+    pane size=1 borderless=true {
+    plugin location="zellij:status-bar"
+  }
+  }
+}
