@@ -18,7 +18,7 @@ const mainNavItems: NavItem[] = [
         title: 'Twitch',
         href: '/twitch',
         icon: Folder,
-    }
+    },
 ];
 
 const footerNavItems: NavItem[] = [
