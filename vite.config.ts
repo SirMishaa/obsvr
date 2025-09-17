@@ -24,6 +24,7 @@ export default defineConfig({
         vueDevTools({
             launchEditor: 'phpstorm',
             componentInspector: true,
+            appendTo: 'resources/js/app.ts',
         }),
         /** For chrome workspace automatic discovery */
         devtoolsJson(),

@@ -8,7 +8,6 @@ use Exception;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Socialite\Facades\Socialite;
-use Laravel\Socialite\Two\Token;
 use Laravel\Socialite\Two\TwitchProvider;
 use Log;
 use Throwable;
@@ -114,9 +113,9 @@ class TwitchTokenManagerService
             }
 
             $ttl = (int) $response['expires_in'] - self::MIN_APP_TOKEN_VALIDITY_SECONDS;
-            Cache::put('twitch_app_access_token', $response['access_token'], now()->addSeconds($ttl));
-
-            Log::info(sprintf('[%s] Obtained new Twitch App Access Token (expires in %d seconds)', self::class, $response['expires_in']));
+            $formattedExpiresAt = now()->addSeconds($ttl);
+            Cache::put('twitch_app_access_token', $response['access_token'], $formattedExpiresAt);
+            Log::info(sprintf('[%s] Obtained new Twitch App Access Token (expires in %s)', self::class, $formattedExpiresAt->diffForHumans()));
 
             return $response['access_token'];
         });
