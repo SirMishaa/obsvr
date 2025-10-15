@@ -1,3 +1,4 @@
+import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
@@ -21,6 +22,8 @@ export default defineConfig({
                 },
             },
         }),
+        /** Ensure that laravel routes frontend helper is being generated automatically */
+        wayfinder(),
         vueDevTools({
             launchEditor: 'phpstorm',
             componentInspector: true,

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { redirect } from '@/actions/App/Http/Controllers/SocialiteController';
 import ConnectWithTwitch from '@/components/ConnectWithTwitch.vue';
 import InputError from '@/components/InputError.vue';
 import TextLink from '@/components/TextLink.vue';
@@ -7,6 +8,8 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthBase from '@/layouts/AuthLayout.vue';
+import { login, register } from '@/routes';
+import { request } from '@/routes/password';
 import { Head, useForm, usePage } from '@inertiajs/vue3';
 import { LoaderCircle } from 'lucide-vue-next';
 import { computed } from 'vue';
@@ -32,7 +35,7 @@ const providerError = computed(() => ({
 }));
 
 const submit = () => {
-    form.post(route('login'), {
+    form.post(login().url, {
         onFinish: () => form.reset('password'),
     });
 };
@@ -70,9 +73,7 @@ const submit = () => {
                 <div class="grid gap-2">
                     <div class="flex items-center justify-between">
                         <Label for="password">Password</Label>
-                        <TextLink v-if="canResetPassword" :href="route('password.request')" class="text-sm" :tabindex="5">
-                            Forgot password?
-                        </TextLink>
+                        <TextLink v-if="canResetPassword" :href="request().url" class="text-sm" :tabindex="5"> Forgot password? </TextLink>
                     </div>
                     <Input
                         id="password"
@@ -97,12 +98,12 @@ const submit = () => {
                     <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
                     Log in
                 </Button>
-                <ConnectWithTwitch class="w-full" redirect="http://localhost:8000/auth/twitch/redirect" fill />
+                <ConnectWithTwitch class="w-full" :redirect="redirect('twitch').url" fill />
             </div>
 
             <div class="text-center text-sm text-muted-foreground">
                 Don't have an account?
-                <TextLink :href="route('register')" :tabindex="5">Sign up</TextLink>
+                <TextLink :href="register().url" :tabindex="5">Sign up</TextLink>
             </div>
         </form>
     </AuthBase>
