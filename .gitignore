@@ -31,3 +31,8 @@ _ide_helper_models.php
 .phpstorm.meta.php
 laradumps.yaml
 .cloudflared/
+
+# Laraval wayfinder
+resources/js/wayfinder
+resources/js/routes
+resources/js/actions
