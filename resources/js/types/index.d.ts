@@ -38,4 +38,24 @@ export interface User {
     updated_at: string;
 }
 
+export interface FavouriteStreamer {
+    id: number;
+    user_id: number;
+    streamer_id: number;
+    streamer_name: string;
+    created_at: string;
+    updated_at: string;
+    subscription_status: 'subscribed' | 'unsubscribed' | 'webhook_callback_verification_pending' | 'enabled';
+    subscriptions: Array<Subscription>;
+}
+
+export interface Subscription {
+    id: number;
+    favourite_streamer_id: number;
+    type: 'stream.online' | 'stream.offline' | 'channel.update';
+    status: 'subscribed' | 'unsubscribed' | 'webhook_callback_verification_pending' | 'enabled';
+    created_at: string;
+    updated_at: string;
+}
+
 export type BreadcrumbItemType = BreadcrumbItem;
