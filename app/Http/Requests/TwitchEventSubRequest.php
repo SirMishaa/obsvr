@@ -33,6 +33,10 @@ class TwitchEventSubRequest extends FormRequest
             /** Flexible fields */
             'subscription' => ['sometimes', 'array'],
             'subscription.type' => ['sometimes', 'string'],
+
+            'subscription.condition' => ['sometimes', 'array'],
+            'subscription.condition.broadcaster_user_id' => ['sometimes', 'string'],
+
             'event' => ['sometimes', 'array'],
             'challenge' => ['sometimes', 'string'],
         ];

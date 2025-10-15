@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Data\TwitchEventSubSubscriptionItemData;
+use App\Enums\TwitchSubscriptionStatus;
 use App\Models\FavouriteStreamer;
 use App\Services\TwitchApiClient;
 use App\Services\TwitchTokenManagerService;
@@ -40,6 +41,12 @@ readonly class UserFavouriteStreamerObserver
             $status = $response['data'][0]['status'] ?? null;
 
             $favouriteStreamer->forceFill(['subscription_status' => $status])->save();
+            $favouriteStreamer->subscriptions()->firstOrCreate([
+                'type' => 'stream.online',
+            ], [
+                'status' => $status ?? TwitchSubscriptionStatus::PENDING,
+            ]);
+
             Log::info(sprintf(
                 '[%s] Ensured EventSub stream.online for %s (%s) — %d deleted, new status=%s',
                 self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $deleted, $status ?? 'unknown'
@@ -86,6 +93,8 @@ readonly class UserFavouriteStreamerObserver
         $token = $this->tokens->ensureFreshAppAccessToken();
         if (! $token) {
             Log::error(sprintf('[%s] No app access token returned', self::class));
+
+            return null;
         }
 
         return $token;
@@ -100,6 +109,7 @@ readonly class UserFavouriteStreamerObserver
             /** @var TwitchEventSubSubscriptionItemData $sub */
             $this->twitchApiClient->deleteSubscription($sub->id, $token);
             $deleted++;
+            $fav->subscriptions()->where('type', $sub->type)->delete();
             Log::info(sprintf(
                 '[%s] Deleted EventSub %s for streamer %s',
                 self::class, $sub->id, $fav->streamer_name
