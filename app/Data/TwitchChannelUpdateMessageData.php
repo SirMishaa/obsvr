@@ -30,6 +30,6 @@ final class TwitchChannelUpdateMessageData extends Data
         public string $categoryName,
 
         #[MapInputName('content_classification_labels')]
-        public array $contentClassificationLabels,
+        public array $contentClassificationLabels = [],
     ) {}
 }
