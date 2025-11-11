@@ -31,7 +31,7 @@ class SubscriptionsController extends Controller
             ->user()
             ?->favouriteStreamers()
             ->with('subscriptions')
-            ->get()->ds();
+            ->get();
 
         return Inertia::render('settings/Subscription', [
             'status' => $request->session()->get('status'),
