@@ -59,7 +59,6 @@ const props = defineProps<{
     statusOfFollowedStreamers: FollowedStreamerStream[];
     /** List of 'userId' streamers that has been marked as favorites */
     favoriteStreamers: string[];
-    vapidPublicKey: string;
     subscriptions: TwitchEventSubSubscriptionItem[] | null;
 }>();
 const countdown = ref<number>(180);
@@ -135,7 +134,13 @@ const formatRelativeDate = (startedAt: string) => {
     );
 };
 
-const enableWebPush = async (vapidPublicKey: string) => {
+const enableWebPush = async () => {
+    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+        console.error('VITE_VAPID_PUBLIC_KEY is not defined');
+        return;
+    }
+
     const perm = await Notification.requestPermission();
     if (perm !== 'granted') console.warn('Permission not granted');
     const reg = await navigator.serviceWorker.register('/service-worker.js');
@@ -207,7 +212,7 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
                 <h2 class="text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
-                <button @click="() => enableWebPush(props.vapidPublicKey)" class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white">
+                <button @click="enableWebPush" class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white">
                     Activer notification
                 </button>
             </div>

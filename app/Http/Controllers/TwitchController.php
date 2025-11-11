@@ -63,7 +63,6 @@ class TwitchController extends Controller
             'followedStreamers' => $followedStreamers,
             'statusOfFollowedStreamers' => $statusOfFollowedStreamers,
             'favoriteStreamers' => $favoriteStreamers,
-            'vapidPublicKey' => config('webpush.vapid.public_key'),
             'subscriptions' => $subscriptions,
         ]);
     }
