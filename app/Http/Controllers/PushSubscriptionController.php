@@ -8,9 +8,9 @@ use Illuminate\Support\Facades\Log;
 
 class PushSubscriptionController extends Controller
 {
-    public function __invoke(Request $request)
+    public function __invoke(Request $request): \Illuminate\Http\RedirectResponse
     {
-        $request->validate([
+        $validated = $request->validate([
             'endpoint' => 'required|string',
             'keys.p256dh' => 'required|string',
             'keys.auth' => 'required|string',
@@ -19,14 +19,16 @@ class PushSubscriptionController extends Controller
         $user = Auth::user();
 
         // contentEncoding: the library usually deduces this, but you can explicitly pass ‘aesgcm’ or ‘aes128gcm’ if necessary.
-        $user->updatePushSubscription(
-            endpoint: $request->input('endpoint'),
-            key: $request->input('keys.p256dh'),
-            token: $request->input('keys.auth'),
-            contentEncoding: $request->header('Content-Encoding') ?? null
-        );
+        if ($user) {
+            $user->updatePushSubscription(
+                endpoint: $validated['endpoint'],
+                key: $validated['keys']['p256dh'],
+                token: $validated['keys']['auth'],
+                contentEncoding: $request->header('Content-Encoding') ?? null
+            );
 
-        Log::debug(sprintf('Updating push subscription for user %s (%s)', $user->id, $user->email));
+            Log::debug(sprintf('Updating push subscription for user %s (%s)', $user->id, $user->email));
+        }
 
         return back(status: 303);
     }
