@@ -31,12 +31,12 @@
     "@radix-icons/vue": "^1.0.0",
     "@tailwindcss/vite": "^4.1.17",
     "@vitejs/plugin-vue": "^6.0.1",
-    "@vueuse/core": "^13.9.0",
+    "@vueuse/core": "^14.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "concurrently": "^9.2.1",
     "laravel-vite-plugin": "^2.0.1",
-    "lucide-vue-next": "^0.545.0",
+    "lucide-vue-next": "^0.553.0",
     "reka-ui": "^2.6.0",
     "tailwind-merge": "^3.3.1",
     "tailwindcss": "^4.1.17",
@@ -47,7 +47,7 @@
     "ziggy-js": "^2.6.0"
   },
   "optionalDependencies": {
-    "@rollup/rollup-linux-x64-gnu": "4.52.4",
+    "@rollup/rollup-linux-x64-gnu": "^4.53.2",
     "@tailwindcss/oxide-linux-x64-gnu": "^4.1.17",
     "lightningcss-linux-x64-gnu": "^1.30.2"
   },
