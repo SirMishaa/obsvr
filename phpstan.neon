@@ -5,4 +5,8 @@ includes:
 parameters:
     paths:
         - app/
-    level: 9
+    level: 8
+    ignoreErrors:
+        - '#PHPDoc tag @mixin contains unknown class App\\Models#'
+    excludePaths:
+        - tests

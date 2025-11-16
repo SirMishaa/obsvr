@@ -212,9 +212,7 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
             <div>
                 <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
                 <h2 class="text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
-                <button @click="enableWebPush" class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white">
-                    Activer notification
-                </button>
+                <button @click="enableWebPush" class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white">Activer notification</button>
             </div>
             <input type="text" placeholder="Rechercher un streamer" class="border-b-2 border-gray-400 focus:outline-none" v-model="inputSearch" />
         </div>
