@@ -73,3 +73,14 @@ jobs:
 
       - name: Run formatter
         run: bun run format:check
+
+      - name: Run security checks against supply chain attacks
+        uses: gensecaihq/Shai-Hulud-2.0-Detector@v1
+        with:
+          fail-on-critical: true
+          fail-on-high: false
+          fail-on-any: false
+          scan-lockfiles: true
+          scan-node-modules: false
+          output-format: text
+          working-directory: '.'
