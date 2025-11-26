@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import StreamHistoryDialog from '@/components/StreamHistoryDialog.vue';
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
@@ -231,7 +232,7 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                                 streamerName: streamer.userName,
                             })
                     "
-                    class="flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
+                    class="group flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
                     :class="{
                         'favorite-border': props.favoriteStreamers.includes(streamer.userId),
                     }"
@@ -271,6 +272,11 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                             <div class="h-2 w-2 animate-pulse rounded-full bg-white text-xs"></div>
                             RealTime
                         </div>
+                        <StreamHistoryDialog
+                            v-if="props.favoriteStreamers.includes(streamer.userId)"
+                            :streamer-id="streamer.userId"
+                            :streamer-name="streamer.userName"
+                        />
                     </div>
                     <div class="px-4 py-6">
                         <div class="space-between flex flex-wrap items-center justify-between">

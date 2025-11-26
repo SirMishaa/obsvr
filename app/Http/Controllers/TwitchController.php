@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\FavouriteStreamer;
+use App\Models\TwitchEvent;
 use App\Services\TwitchApiClient;
 use App\Services\TwitchTokenManagerService;
 use Illuminate\Http\RedirectResponse;
@@ -93,5 +94,21 @@ class TwitchController extends Controller
 
         return back(status: 303);
 
+    }
+
+    public function getStreamerEvents(FavouriteStreamer $favouriteStreamer): RedirectResponse
+    {
+        if ($favouriteStreamer->user_id !== auth()->id()) {
+            abort(403);
+        }
+
+        $streamerEvents = TwitchEvent::where('streamer_id', $favouriteStreamer->streamer_id)
+            ->orderBy('occurred_at', 'desc')
+            ->limit(50)
+            ->get();
+
+        return back()->with([
+            'streamerEvents' => $streamerEvents,
+        ]);
     }
 }

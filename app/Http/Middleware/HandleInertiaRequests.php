@@ -57,6 +57,7 @@ class HandleInertiaRequests extends Middleware
             'flash' => [
                 'message' => $request->session()->get('message'),
             ],
+            'streamerEvents' => fn () => session('streamerEvents'),
         ];
     }
 }

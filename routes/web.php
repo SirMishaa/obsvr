@@ -29,6 +29,9 @@ Route::prefix('twitch')->group(function () {
     Route::post('favorite/{streamerId}', [TwitchController::class, 'toggleFavoriteStreamer'])
         ->name('twitch.favorite')
         ->middleware(['auth', 'verified']);
+    Route::get('favorite/{favouriteStreamer:streamer_id}', [TwitchController::class, 'getStreamerEvents'])
+        ->name('twitch.streamer.events')
+        ->middleware(['auth', 'verified']);
 });
 
 Route::prefix('auth/{provider}')
