@@ -36,7 +36,7 @@
         "clsx": "^2.1.1",
         "concurrently": "^9.2.1",
         "laravel-vite-plugin": "^2.0.1",
-        "lucide-vue-next": "^0.553.0",
+        "lucide-vue-next": "^0.555.0",
         "reka-ui": "^2.6.0",
         "tailwind-merge": "^3.4.0",
         "tailwindcss": "^4.1.17",
@@ -47,7 +47,7 @@
         "ziggy-js": "^2.6.0"
     },
     "optionalDependencies": {
-        "@rollup/rollup-linux-x64-gnu": "4.53.2",
+        "@rollup/rollup-linux-x64-gnu": "4.53.3",
         "@tailwindcss/oxide-linux-x64-gnu": "^4.1.17",
         "lightningcss-linux-x64-gnu": "^1.30.2"
     },
