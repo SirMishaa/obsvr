@@ -7,6 +7,7 @@ use App\Data\TwitchStreamOnlineWebhookMessageData;
 use App\Enums\TwitchSubscriptionStatus;
 use App\Http\Requests\TwitchEventSubRequest;
 use App\Models\FavouriteStreamer;
+use App\Models\TwitchEvent;
 use App\Notifications\TwitchChannelUpdatedNotification;
 use App\Notifications\TwitchStreamerStreamStartedNotification;
 use Illuminate\Http\Response;
@@ -104,6 +105,15 @@ class TwitchEventSubController extends Controller
     {
         $streamOnlineMessage = TwitchStreamOnlineWebhookMessageData::from($subscription);
 
+        $this->storeEvent(
+            eventType: 'stream.online',
+            streamerId: $streamOnlineMessage->broadcasterUserId,
+            streamerName: $streamOnlineMessage->broadcasterUserName,
+            payload: $subscription,
+            eventId: $streamOnlineMessage->id,
+            occurredAt: $streamOnlineMessage->startedAt,
+        );
+
         $favouriteStreamers = FavouriteStreamer::where('streamer_id', $streamOnlineMessage->broadcasterUserId)
             ->orWhere('streamer_name', $streamOnlineMessage->broadcasterUserName)
             ->with('user')
@@ -124,6 +134,14 @@ class TwitchEventSubController extends Controller
 
     private function handleStreamOfflineEvent(array $subscription): void
     {
+        $this->storeEvent(
+            eventType: 'stream.offline',
+            streamerId: Arr::string($subscription, 'broadcaster_user_id', null),
+            streamerName: Arr::string($subscription, 'broadcaster_user_name', null),
+            payload: $subscription,
+            eventId: Arr::string($subscription, 'id', null),
+        );
+
         Log::info('Stream offline event received:', [
             'subscription' => $subscription,
         ]);
@@ -133,6 +151,14 @@ class TwitchEventSubController extends Controller
     {
 
         $channelUpdateMessage = TwitchChannelUpdateMessageData::from($subscription);
+
+        $this->storeEvent(
+            eventType: 'channel.update',
+            streamerId: $channelUpdateMessage->broadcasterUserId,
+            streamerName: $channelUpdateMessage->broadcasterUserName,
+            payload: $subscription,
+            eventId: Arr::string($subscription, 'id', null),
+        );
 
         $favouriteStreamers = FavouriteStreamer::where('streamer_id', $channelUpdateMessage->broadcasterUserId)
             ->orWhere('streamer_name', $channelUpdateMessage->broadcasterUserName)
@@ -153,5 +179,27 @@ class TwitchEventSubController extends Controller
                 $favouriteStreamer->user->notifyNow(new TwitchChannelUpdatedNotification($channelUpdateMessage));
             }
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     */
+    private function storeEvent(
+        string $eventType,
+        ?string $streamerId,
+        ?string $streamerName,
+        array $payload,
+        ?string $eventId = null,
+        ?\DateTimeInterface $occurredAt = null,
+    ): TwitchEvent {
+        return TwitchEvent::create([
+            'event_id' => $eventId,
+            'event_type' => $eventType,
+            'streamer_id' => $streamerId,
+            'streamer_name' => $streamerName,
+            'payload' => $payload,
+            'occurred_at' => $occurredAt ?? now(),
+            'received_at' => now(),
+        ]);
     }
 }
