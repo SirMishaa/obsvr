@@ -19,7 +19,7 @@ Route::get('/.well-known/appspecific/com.chrome.devtools.json', function () {
 })->name('devtools');
 
 Route::get('dashboard', function () {
-    return Inertia::render('Dashboard');
+    return redirect()->route('twitch');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::prefix('twitch')->group(function () {

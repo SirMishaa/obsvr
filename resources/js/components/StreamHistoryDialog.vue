@@ -102,7 +102,7 @@ const getEventLabel = (event: TwitchEvent): string => {
         case 'stream.offline':
             return 'Stream terminé';
         case 'channel.update':
-            return 'Informations mises à jour';
+            return 'Mise à jour du stream';
         default:
             return 'Événement';
     }
