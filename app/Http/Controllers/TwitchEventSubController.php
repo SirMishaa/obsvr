@@ -136,10 +136,10 @@ class TwitchEventSubController extends Controller
     {
         $this->storeEvent(
             eventType: 'stream.offline',
-            streamerId: Arr::string($subscription, 'broadcaster_user_id', null),
-            streamerName: Arr::string($subscription, 'broadcaster_user_name', null),
+            streamerId: Arr::get($subscription, 'broadcaster_user_id'),
+            streamerName: Arr::get($subscription, 'broadcaster_user_name'),
             payload: $subscription,
-            eventId: Arr::string($subscription, 'id', null),
+            eventId: Arr::get($subscription, 'id'),
         );
 
         Log::info('Stream offline event received:', [
@@ -157,7 +157,7 @@ class TwitchEventSubController extends Controller
             streamerId: $channelUpdateMessage->broadcasterUserId,
             streamerName: $channelUpdateMessage->broadcasterUserName,
             payload: $subscription,
-            eventId: Arr::string($subscription, 'id', null),
+            eventId: Arr::get($subscription, 'id'),
         );
 
         $favouriteStreamers = FavouriteStreamer::where('streamer_id', $channelUpdateMessage->broadcasterUserId)
