@@ -9,7 +9,7 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.5",
+        "php": "^8.4",
         "ext-openssl": "*",
         "erag/laravel-lang-sync-inertia": "^1.6.0",
         "inertiajs/inertia-laravel": "^2.0.10",

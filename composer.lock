@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "f744478b1a4ad3970525efd55e01a824",
+    "content-hash": "97bd2bbbe9c8b00a57d3d53073c13fe9",
     "packages": [
         {
             "name": "brick/math",
@@ -1247,16 +1247,16 @@
         },
         {
             "name": "inertiajs/inertia-laravel",
-            "version": "v2.0.10",
+            "version": "v2.0.11",
             "source": {
                 "type": "git",
                 "url": "https://github.com/inertiajs/inertia-laravel.git",
-                "reference": "07da425d58a3a0e3ace9c296e67bd897a6e47009"
+                "reference": "041e148b3228407b5abe584a4f02df2651ab4d85"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/inertiajs/inertia-laravel/zipball/07da425d58a3a0e3ace9c296e67bd897a6e47009",
-                "reference": "07da425d58a3a0e3ace9c296e67bd897a6e47009",
+                "url": "https://api.github.com/repos/inertiajs/inertia-laravel/zipball/041e148b3228407b5abe584a4f02df2651ab4d85",
+                "reference": "041e148b3228407b5abe584a4f02df2651ab4d85",
                 "shasum": ""
             },
             "require": {
@@ -1311,9 +1311,9 @@
             ],
             "support": {
                 "issues": "https://github.com/inertiajs/inertia-laravel/issues",
-                "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.10"
+                "source": "https://github.com/inertiajs/inertia-laravel/tree/v2.0.11"
             },
-            "time": "2025-09-28T21:21:36+00:00"
+            "time": "2025-11-26T23:07:12+00:00"
         },
         {
             "name": "laminas/laminas-diactoros",
@@ -1471,16 +1471,16 @@
         },
         {
             "name": "laravel/framework",
-            "version": "v12.40.1",
+            "version": "v12.40.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/laravel/framework.git",
-                "reference": "2e986acbf9acf62cba13400bc23c4d639bf188b9"
+                "reference": "1ccd99220b474500e672b373f32bd709ec38de50"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/laravel/framework/zipball/2e986acbf9acf62cba13400bc23c4d639bf188b9",
-                "reference": "2e986acbf9acf62cba13400bc23c4d639bf188b9",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/1ccd99220b474500e672b373f32bd709ec38de50",
+                "reference": "1ccd99220b474500e672b373f32bd709ec38de50",
                 "shasum": ""
             },
             "require": {
@@ -1686,7 +1686,7 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
-            "time": "2025-11-25T16:16:33+00:00"
+            "time": "2025-11-26T19:24:25+00:00"
         },
         {
             "name": "laravel/nightwatch",
@@ -2327,16 +2327,16 @@
         },
         {
             "name": "league/commonmark",
-            "version": "2.7.1",
+            "version": "2.8.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/thephpleague/commonmark.git",
-                "reference": "10732241927d3971d28e7ea7b5712721fa2296ca"
+                "reference": "4efa10c1e56488e658d10adf7b7b7dcd19940bfb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/10732241927d3971d28e7ea7b5712721fa2296ca",
-                "reference": "10732241927d3971d28e7ea7b5712721fa2296ca",
+                "url": "https://api.github.com/repos/thephpleague/commonmark/zipball/4efa10c1e56488e658d10adf7b7b7dcd19940bfb",
+                "reference": "4efa10c1e56488e658d10adf7b7b7dcd19940bfb",
                 "shasum": ""
             },
             "require": {
@@ -2373,7 +2373,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "2.8-dev"
+                    "dev-main": "2.9-dev"
                 }
             },
             "autoload": {
@@ -2430,7 +2430,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-07-20T12:47:49+00:00"
+            "time": "2025-11-26T21:48:24+00:00"
         },
         {
             "name": "league/config",
@@ -12179,7 +12179,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.5",
+        "php": "^8.4",
         "ext-openssl": "*"
     },
     "platform-dev": {},
