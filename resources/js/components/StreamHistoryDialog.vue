@@ -2,7 +2,7 @@
 import { getStreamerEvents } from '@/actions/App/Http/Controllers/TwitchController';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import type { TwitchEvent } from '@/types';
-import { router } from '@inertiajs/vue3';
+import { Temporal } from '@js-temporal/polyfill';
 import { History } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
 
@@ -14,88 +14,72 @@ const props = defineProps<{
 const isOpen = ref(false);
 const loadedEvents = ref<TwitchEvent[]>([]);
 const isLoading = ref(false);
+const errors = ref<string | null>(null);
 
-watch(isOpen, (newVal) => {
+watch(isOpen, async (newVal) => {
     if (!newVal || loadedEvents.value.length > 0) return;
 
     isLoading.value = true;
+    errors.value = null;
 
-    router.get(
-        getStreamerEvents(props.streamerId),
-        {},
-        {
-            preserveScroll: true,
-            preserveState: true,
-            replace: true,
-            only: ['streamerEvents'],
-            onSuccess: (page) => {
-                loadedEvents.value = page.props.streamerEvents;
-            },
-            onFinish: () => {
-                isLoading.value = false;
-            },
-        },
-    );
+    try {
+        const [response] = await Promise.all([
+            fetch(getStreamerEvents.url(props.streamerId), {
+                headers: {
+                    Accept: 'application/json',
+                },
+            }),
+            new Promise((resolve) => setTimeout(resolve, 400)),
+        ]);
+
+        if (!response.ok) throw new Error('Failed to load events');
+        loadedEvents.value = await response.json();
+    } catch (err) {
+        errors.value = err instanceof Error ? err.message : 'Une erreur est survenue';
+    } finally {
+        isLoading.value = false;
+    }
 });
 
-const generateMockHistoryForStreamer = (streamerId: string, streamerName: string): TwitchEvent[] => {
-    const now = new Date();
-    const events: TwitchEvent[] = [];
+const streamHistory = computed(() => (loadedEvents.value.length > 0 ? loadedEvents.value : []));
 
-    for (let i = 0; i < 10; i++) {
-        const daysAgo = Math.floor(i / 2);
-        const hoursAgo = (i % 2) * 6;
-        const eventDate = new Date(now);
-        eventDate.setDate(eventDate.getDate() - daysAgo);
-        eventDate.setHours(eventDate.getHours() - hoursAgo);
+/**
+ * Formats a given date string into a relative or absolute date based on its proximity to the current time.
+ *
+ * If the time difference between the current time and the given date is greater than one week, the function returns
+ * the date formatted as a localized string in "fr-FR" format, including the day, short month, year, hour, and minute.
+ *
+ * If the difference is less than one week, it returns a relative time string in French, indicating the difference
+ * in days, hours, or minutes using the Temporal API and Intl.RelativeTimeFormat.
+ *
+ * @param {string} dateString - The input date as an ISO 8601 string to be formatted.
+ * @returns {string} A formatted string representing the date, either in absolute or relative terms.
+ */
+const formatEventDate = (dateString: string): string => {
+    const eventTime = Temporal.Instant.from(dateString);
+    const now = Temporal.Now.instant();
+    const duration = now.since(eventTime);
 
-        const eventTypes: TwitchEvent['event_type'][] = ['stream.online', 'stream.offline', 'channel.update'];
-        const eventType = eventTypes[i % 3];
-
-        events.push({
-            id: i + 1,
-            event_id: `event-${streamerId}-${i}`,
-            event_type: eventType,
-            streamer_id: streamerId,
-            streamer_name: streamerName,
-            payload: {
-                id: `event-${i}`,
-                broadcaster_user_id: streamerId,
-                broadcaster_user_name: streamerName,
-                started_at: eventType === 'stream.online' ? eventDate.toISOString() : undefined,
-                title: eventType === 'channel.update' ? `Stream title updated ${i}` : undefined,
-                category_name: eventType === 'channel.update' ? 'Just Chatting' : undefined,
-            },
-            occurred_at: eventDate.toISOString(),
-            received_at: eventDate.toISOString(),
+    const days = duration.total('days');
+    if (days > 7) {
+        return eventTime.toLocaleString('fr-FR', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
         });
     }
 
-    return events.sort((a, b) => new Date(b.occurred_at).getTime() - new Date(a.occurred_at).getTime());
-};
+    const rtf = new Intl.RelativeTimeFormat('fr', { numeric: 'auto' });
 
-const streamHistory = computed(() => {
-    return loadedEvents.value.length > 0 ? loadedEvents.value : generateMockHistoryForStreamer(props.streamerId, props.streamerName);
-});
+    if (days >= 1) return rtf.format(-Math.round(days), 'day');
 
-// Todo: Refactor this with better date handling
-const formatEventDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInMs = now.getTime() - date.getTime();
-    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
-    const diffInDays = Math.floor(diffInHours / 24);
+    const hours = duration.total('hours');
+    if (hours >= 1) return rtf.format(-Math.round(hours), 'hour');
 
-    if (diffInDays > 7) {
-        return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
-    } else if (diffInDays > 0) {
-        return `Il y a ${diffInDays} jour${diffInDays > 1 ? 's' : ''}`;
-    } else if (diffInHours > 0) {
-        return `Il y a ${diffInHours} heure${diffInHours > 1 ? 's' : ''}`;
-    } else {
-        const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-        return `Il y a ${diffInMinutes} minute${diffInMinutes > 1 ? 's' : ''}`;
-    }
+    const minutes = duration.total('minutes');
+    return rtf.format(-Math.round(minutes), 'minute');
 };
 
 const getEventIcon = (eventType: TwitchEvent['event_type']): string => {
@@ -181,6 +165,11 @@ const getEventColor = (eventType: TwitchEvent['event_type']): string => {
                 <!-- Empty state -->
                 <div v-else-if="streamHistory.length === 0" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                     Aucun événement enregistré pour ce streamer
+                </div>
+
+                <!-- Error state -->
+                <div v-else-if="errors" class="py-8 text-center text-sm text-red-500">
+                    {{ errors }}
                 </div>
 
                 <!-- Events list -->

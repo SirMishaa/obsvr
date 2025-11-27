@@ -6,6 +6,7 @@ use App\Models\FavouriteStreamer;
 use App\Models\TwitchEvent;
 use App\Services\TwitchApiClient;
 use App\Services\TwitchTokenManagerService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Concurrency;
@@ -96,7 +97,10 @@ class TwitchController extends Controller
 
     }
 
-    public function getStreamerEvents(FavouriteStreamer $favouriteStreamer): RedirectResponse
+    /**
+     * Get the events for a favourite streamer. We're not using Inertia since it adds 600 ms of overhead.
+     */
+    public function getStreamerEvents(FavouriteStreamer $favouriteStreamer): JsonResponse
     {
         if ($favouriteStreamer->user_id !== auth()->id()) {
             abort(403);
@@ -105,10 +109,8 @@ class TwitchController extends Controller
         $streamerEvents = TwitchEvent::where('streamer_id', $favouriteStreamer->streamer_id)
             ->orderBy('occurred_at', 'desc')
             ->limit(50)
-            ->get();
+            ->get(['id', 'event_type', 'payload', 'occurred_at']);
 
-        return back()->with([
-            'streamerEvents' => $streamerEvents,
-        ]);
+        return response()->json($streamerEvents);
     }
 }
