@@ -2,7 +2,20 @@
     "mcpServers": {
         "laravel-boost": {
             "command": "wsl.exe",
-            "args": ["/usr/bin/php", "/home/mishaa/dev/obsvr/artisan", "boost:mcp"]
+            "args": [
+                "/usr/bin/php",
+                "/home/mishaa/dev/obsvr/artisan",
+                "boost:mcp"
+            ]
+        },
+        "obsvr": {
+            "command": "wsl.exe",
+            "args": [
+                "/usr/bin/php",
+                "/home/mishaa/dev/obsvr/artisan",
+                "mcp:start",
+                "obsvr"
+            ]
         }
     }
 }
