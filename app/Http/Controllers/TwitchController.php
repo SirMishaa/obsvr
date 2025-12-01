@@ -15,12 +15,15 @@ use Inertia\Response;
 
 class TwitchController extends Controller
 {
-    public function index(): Response|RedirectResponse
+    public function index(TwitchTokenManagerService $twitchTokenManagerService): Response|RedirectResponse
     {
+        /** @var \App\Models\User|null $user */
         $user = auth()->user();
+        if (empty($user)) {
+            return redirect()->route('login');
+        }
 
         try {
-            $twitchTokenManagerService = app(TwitchTokenManagerService::class);
             $twitchTokenManagerService->ensureFreshUserAccessTokens($user);
             $appToken = $twitchTokenManagerService->ensureFreshAppAccessToken();
         } catch (\Throwable $e) {
