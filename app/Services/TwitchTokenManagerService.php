@@ -31,8 +31,8 @@ class TwitchTokenManagerService
      * @return array{
      *     access_token: string,
      *     refresh_token: string,
-     *     expires_in: int,
-     * } An array containing the access token, refresh token, and expiration time in seconds.
+     *     expires_at: \Illuminate\Support\Carbon,
+     * } An array containing the access token, refresh token, and expiration Carbon instance.
      *
      * @throws Error|Throwable If the access token or refresh token is missing or if refreshing the tokens fails.
      */
@@ -86,7 +86,7 @@ class TwitchTokenManagerService
                 'expires_at' => now()->addSeconds($tokens->expiresIn),
             ];
 
-        } catch (Exception|Throwable $e) {
+        } catch (Throwable $e) {
             $this->clearTokens($user);
             Log::warning('Failed to refresh Twitch tokens for user '.$user->id.': '.$e->getMessage());
             throw $e;
