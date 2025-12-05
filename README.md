@@ -4,6 +4,7 @@ A modern Laravel application for tracking and monitoring Twitch streams and even
 
 ![img.png](public/README-cover.png)
 ![img_1.png](public/README-cover-subs-settings.png)
+![img_2.png](public/README-cover-subs-history.png)
 
 ## Features
 
@@ -14,6 +15,7 @@ A modern Laravel application for tracking and monitoring Twitch streams and even
 - **Subscription Management** - Easily manage your streamer subscriptions
 - **Modern UI** - Clean, responsive interface built with Vue 3 and Tailwind CSS 4
 - **Dark Mode** - Full dark mode support for comfortable viewing
+- **History** - Show a complete history with timeline for your favourites streamers
 
 ## Tech Stack
 
