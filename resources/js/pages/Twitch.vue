@@ -63,7 +63,7 @@ const props = defineProps<{
     favoriteStreamers: string[];
     subscriptions: TwitchEventSubSubscriptionItem[] | null;
 }>();
-const countdown = ref<number>(180);
+const countdown = ref<number>(120);
 const cacheBust = ref<string>('');
 const inputSearch = ref<string>('');
 
