@@ -46,13 +46,9 @@ class TwitchController extends Controller
          * This way since we had weirds issues with unserializable objects when using Concurrency::run
          * when capturing objects and not using static closures.
          */
-        [$statusOfFollowedStreamers, $followedStreamers, $favoriteStreamers, $subscriptions] = Concurrency::run([
+        [$statusOfFollowedStreamers, $favoriteStreamers, $subscriptions] = Concurrency::run([
             static fn () => app(TwitchApiClient::class)
                 ->getStatusOfFollowedStreamers($providerId, $accessToken, 120)
-                ->data
-                ->toArray(),
-            static fn () => app(TwitchApiClient::class)
-                ->getFollowedStreamers($providerId, $accessToken)
                 ->data
                 ->toArray(),
             static fn () => $user->favouriteStreamers()
@@ -65,7 +61,6 @@ class TwitchController extends Controller
         ]);
 
         return Inertia::render('Twitch', [
-            'followedStreamers' => $followedStreamers,
             'statusOfFollowedStreamers' => $statusOfFollowedStreamers,
             'favoriteStreamers' => $favoriteStreamers,
             'subscriptions' => $subscriptions,
