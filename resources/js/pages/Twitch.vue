@@ -5,6 +5,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem } from '@/types';
 import { levenshteinDistance, urlBase64ToUint8Array } from '@/utils';
 import { Head, router } from '@inertiajs/vue3';
+import { Clock, Eye } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
 interface FollowedStreamer {
@@ -129,7 +130,7 @@ const redirectToTwitch = (username: string) => {
 };
 
 const formatRelativeDate = (startedAt: string) => {
-    return new Intl.RelativeTimeFormat('fr', { numeric: 'auto' }).format(
+    return new Intl.RelativeTimeFormat('fr', { numeric: 'auto', style: 'short' }).format(
         -Math.floor((new Date().getTime() - new Date(startedAt).getTime()) / 60000),
         'minute',
     );
@@ -237,7 +238,7 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                         'favorite-border': props.favoriteStreamers.includes(streamer.userId),
                     }"
                 >
-                    <div class="relative h-28">
+                    <div class="relative h-32">
                         <img
                             :src="
                                 streamer.thumbnailUrl
@@ -279,18 +280,25 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                         />
                     </div>
                     <div class="px-4 py-6">
-                        <div class="space-between flex flex-wrap items-center justify-between">
-                            <h3 class="flex-1 text-base font-bold">{{ streamer.userName }}</h3>
-                            <small class="text-xs text-gray-400">{{ streamer.viewerCount }} viewers</small>
+                        <h3 class="text-base font-bold">{{ streamer.userName }}</h3>
+                        <div v-if="streamer.title" class="mt-1 overflow-hidden">
+                            <p class="stream-title text-sm text-gray-700 dark:text-gray-300">
+                                {{ streamer.title }}
+                            </p>
                         </div>
-                        <div
-                            v-if="streamer.type === 'live'"
-                            class="flex items-center justify-between gap-2 text-xs font-semibold text-gray-400 dark:text-gray-200"
-                        >
+                        <div v-if="streamer.type === 'live'" class="mt-2 text-xs font-semibold text-gray-400 dark:text-gray-200">
                             <p>{{ streamer.gameName }}</p>
-                            <p class="hidden text-[.65rem] text-gray-500 dark:text-gray-400">{{ streamer.userId }}</p>
                         </div>
-                        <p class="text-xs/4 text-gray-500 dark:text-gray-400">Commencé {{ formatRelativeDate(streamer.startedAt) }}</p>
+                        <div class="mt-2 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                            <div class="flex items-center gap-1">
+                                <Eye :size="14" />
+                                <span>{{ streamer.viewerCount }}</span>
+                            </div>
+                            <div class="flex items-center gap-1">
+                                <Clock :size="14" />
+                                <span>{{ formatRelativeDate(streamer.startedAt) }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -341,7 +349,7 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
 .favorite-border::before {
     content: '';
     position: absolute;
-    inset: -2px; /* épaisseur */
+    inset: -2px;
     border-radius: inherit;
     padding: 5px;
     background: linear-gradient(270deg, #ff0080, #7928ca, #2afadf, #ff8c00);
@@ -364,5 +372,36 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
     100% {
         background-position: 0% 50%;
     }
+}
+
+.stream-title {
+    position: relative;
+    overflow: hidden;
+    max-height: 3.9em;
+    line-height: 1.4;
+    transition: max-height 0.25s ease-in-out;
+}
+
+.stream-title::after {
+    content: '...';
+    position: absolute;
+    bottom: 0;
+    right: 0;
+    background: white;
+    padding-left: 0.5em;
+    opacity: 1;
+    transition: opacity 0.25s ease-in-out;
+}
+
+.dark .stream-title::after {
+    background: #121212;
+}
+
+.group:hover .stream-title {
+    max-height: 15em;
+}
+
+.group:hover .stream-title::after {
+    opacity: 0;
 }
 </style>
