@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import ScheduledStreamCard from '@/components/ScheduledStreamCard.vue';
 import StreamHistoryDialog from '@/components/StreamHistoryDialog.vue';
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { type BreadcrumbItem } from '@/types';
+import { type BreadcrumbItem, ScheduledStream } from '@/types';
 import { levenshteinDistance, urlBase64ToUint8Array } from '@/utils';
 import { Head, router } from '@inertiajs/vue3';
 import { Clock, Eye } from 'lucide-vue-next';
@@ -62,6 +63,7 @@ const props = defineProps<{
     /** List of 'userId' streamers that has been marked as favorites */
     favoriteStreamers: string[];
     subscriptions: TwitchEventSubSubscriptionItem[] | null;
+    scheduledStreams?: ScheduledStream[];
 }>();
 const countdown = ref<number>(120);
 const cacheBust = ref<string>('');
@@ -209,6 +211,24 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                 <PlaceholderPattern />
             </div>
         </div>-->
+
+        <!-- Scheduled Streams Section -->
+        <div v-if="props.scheduledStreams && props.scheduledStreams.length > 0" class="mt-6">
+            <div class="mb-4 px-4">
+                <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Prochains streams planifiés</h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">Streams à venir de vos streamers favoris</p>
+            </div>
+
+            <section class="grid grid-cols-1 gap-x-4 gap-y-6 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
+                <ScheduledStreamCard
+                    v-for="schedule in props.scheduledStreams"
+                    :key="schedule.broadcasterId"
+                    :schedule="schedule"
+                    :is-favorite="props.favoriteStreamers.includes(schedule.broadcasterId)"
+                    @click="() => redirectToTwitch(schedule.broadcasterLogin)"
+                />
+            </section>
+        </div>
 
         <div class="mt-6 flex items-center justify-between px-4">
             <div>

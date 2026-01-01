@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Data\TwitchBroadcastScheduleResponse;
 use App\Data\TwitchEventSubSubscriptionsResponse;
 use App\Data\TwitchFollowedChannelsPaginatedResponse;
 use App\Data\TwitchStreamPaginatedResponse;
@@ -58,6 +59,96 @@ readonly class TwitchApiClient
         });
 
         return TwitchFollowedChannelsPaginatedResponse::from($payload);
+    }
+
+    /**
+     * Retrieves the broadcast schedule for a specific broadcaster.
+     *
+     * @param  string  $broadcasterId  The ID of the broadcaster whose schedule is being fetched.
+     * @param  string  $token  The authentication token used for the API request.
+     * @param  int  $ttlFromNow  The time-to-live for the cache in seconds, defaulting to 2 hours (7200 seconds). Will be halved if no schedule is found.
+     * @return TwitchBroadcastScheduleResponse|null Returns the response containing the broadcast schedule, or null if not found.
+     */
+    public function getBroadcastSchedule(string $broadcasterId, string $token, int $ttlFromNow = 7200): ?TwitchBroadcastScheduleResponse
+    {
+        $cacheKey = sprintf('twitch.broadcast_schedule.%s', $broadcasterId);
+
+        $response = Cache::remember($cacheKey, Carbon::now()->addSeconds($ttlFromNow), function () use ($broadcasterId, $token, $ttlFromNow, $cacheKey) {
+            Log::debug('[TwitchAPI] cache MISS for broadcast_schedule', ['broadcasterId' => $broadcasterId]);
+
+            $url = $this->baseUrl
+                ->withPath('/helix/schedule')
+                ->withQuery(['broadcaster_id' => $broadcasterId]);
+
+            try {
+                return $this->handleResponse($this->getHttpClient($token), $url);
+            } catch (TwitchApiException $e) {
+                /**
+                 * If the broadcaster does not have a schedule, Twitch returns a 404.
+                 * In this case, we cache a null response for half the TTL duration.
+                 * This prevents spamming API calls for broadcasters without schedules.
+                 */
+                if ($e->getStatusCode() === 404) {
+                    Cache::put($cacheKey, null, Carbon::now()->addSeconds((int) ($ttlFromNow / 2)));
+
+                    return null;
+                }
+
+                throw $e;
+            }
+        });
+
+        return $response ? TwitchBroadcastScheduleResponse::from($response) : null;
+    }
+
+    /**
+     * Retrieves scheduled streams for multiple broadcasters with their next upcoming segment.
+     *
+     * This method fetches broadcast schedules for each provided broadcaster ID and returns
+     * only those with future scheduled segments, sorted by start time.
+     *
+     * @param  array<int, string>  $broadcasterIds  Array of broadcaster IDs to fetch schedules for.
+     * @param  string  $token  The authentication token used for the API request.
+     * @return array<int, array{broadcasterId: string, broadcasterName: string, broadcasterLogin: string, nextSegment: array{id: string, startTime: string, endTime: string, title: string, canceledUntil: string|null, category: array{id: string, name: string}|null, isRecurring: bool}}> Array of scheduled streams with camelCase keys for frontend compatibility.
+     */
+    public function getScheduledStreamsForBroadcasters(array $broadcasterIds, string $token): array
+    {
+        $scheduledStreams = [];
+
+        foreach ($broadcasterIds as $broadcasterId) {
+            $schedule = $this->getBroadcastSchedule($broadcasterId, $token);
+
+            if (! $schedule) {
+                continue;
+            }
+
+            $nextSegment = collect($schedule->data['segments'] ?? [])
+                ->filter(fn ($seg) => ! $seg['canceled_until'] && Carbon::parse($seg['start_time'])->isFuture())
+                ->sortBy('start_time')
+                ->first();
+
+            if ($nextSegment) {
+                // Map to camelCase keys for frontend, maybe could be improved by using DTOs
+                $scheduledStreams[] = [
+                    'broadcasterId' => $schedule->data['broadcaster_id'],
+                    'broadcasterName' => $schedule->data['broadcaster_name'],
+                    'broadcasterLogin' => $schedule->data['broadcaster_login'],
+                    'nextSegment' => [
+                        'id' => $nextSegment['id'],
+                        'startTime' => $nextSegment['start_time'],
+                        'endTime' => $nextSegment['end_time'],
+                        'title' => $nextSegment['title'],
+                        'canceledUntil' => $nextSegment['canceled_until'],
+                        'category' => $nextSegment['category'],
+                        'isRecurring' => $nextSegment['is_recurring'],
+                    ],
+                ];
+            }
+        }
+
+        usort($scheduledStreams, fn ($a, $b) => Carbon::parse($a['nextSegment']['startTime']) <=> Carbon::parse($b['nextSegment']['startTime']));
+
+        return $scheduledStreams;
     }
 
     public function getStatusOfFollowedStreamers(string $userId, string $token, int $ttlFromNow = 3600): TwitchStreamPaginatedResponse
@@ -336,13 +427,11 @@ readonly class TwitchApiClient
                     'response' => $response->body(),
                 ]);
 
-                // Handle response = 401
-
                 if ($response->status() === 401) {
                     throw new TwitchUnauthorizedException('Unauthorized: Invalid or expired token');
                 }
 
-                throw new TwitchApiException($message);
+                throw new TwitchApiException($message, $response->status());
             }
 
             try {

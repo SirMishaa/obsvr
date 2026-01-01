@@ -84,3 +84,20 @@ export interface TwitchEvent {
 }
 
 export type BreadcrumbItemType = BreadcrumbItem;
+
+export interface StreamScheduleSegment {
+    id: string;
+    startTime: string;
+    endTime: string;
+    title: string;
+    canceledUntil: string | null;
+    category: { id: string; name: string } | null;
+    isRecurring: boolean;
+}
+
+export interface ScheduledStream {
+    broadcasterId: string;
+    broadcasterName: string;
+    broadcasterLogin: string;
+    nextSegment: StreamScheduleSegment | null;
+}

@@ -5,11 +5,13 @@ A modern Laravel application for tracking and monitoring Twitch streams and even
 ![img.png](public/README-cover.png)
 ![img_1.png](public/README-cover-subs-settings.png)
 ![img_2.png](public/README-cover-subs-history.png)
+![img_3.png](public/README-cover-stream-schedule.png)
 
 ## Features
 
 - **Twitch Authentication** - Sign in with your Twitch account using OAuth
 - **Stream Monitoring** - Track your favorite streamers and their activities
+- **Stream Schedules** - View upcoming streams and schedules
 - **Real-time Events** - Receive Twitch EventSub webhooks for instant updates
 - **Push Notifications** - Get browser push notifications when streamers go live
 - **Subscription Management** - Easily manage your streamer subscriptions

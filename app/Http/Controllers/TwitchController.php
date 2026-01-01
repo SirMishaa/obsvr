@@ -15,6 +15,10 @@ use Inertia\Response;
 
 class TwitchController extends Controller
 {
+    public function __construct(
+        private readonly TwitchApiClient $twitchApiClient,
+    ) {}
+
     public function index(TwitchTokenManagerService $twitchTokenManagerService): Response|RedirectResponse
     {
         /** @var \App\Models\User|null $user */
@@ -46,7 +50,9 @@ class TwitchController extends Controller
          * This way since we had weirds issues with unserializable objects when using Concurrency::run
          * when capturing objects and not using static closures.
          */
-        [$statusOfFollowedStreamers, $favoriteStreamers, $subscriptions] = Concurrency::run([
+        $favoriteStreamerIds = $user->favouriteStreamers()->pluck('streamer_id')->toArray();
+
+        [$statusOfFollowedStreamers, $favoriteStreamers, $subscriptions, $scheduledStreams] = Concurrency::run([
             static fn () => app(TwitchApiClient::class)
                 ->getStatusOfFollowedStreamers($providerId, $accessToken, 120)
                 ->data
@@ -58,12 +64,15 @@ class TwitchController extends Controller
                 ->fetchSubscriptions(null, $appToken)
                 ->data
                 ->toArray(),
+            static fn () => app(TwitchApiClient::class)
+                ->getScheduledStreamsForBroadcasters($favoriteStreamerIds, $accessToken),
         ]);
 
         return Inertia::render('Twitch', [
             'statusOfFollowedStreamers' => $statusOfFollowedStreamers,
             'favoriteStreamers' => $favoriteStreamers,
             'subscriptions' => $subscriptions,
+            'scheduledStreams' => $scheduledStreams,
         ]);
     }
 
