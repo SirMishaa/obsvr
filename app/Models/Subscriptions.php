@@ -22,12 +22,20 @@ class Subscriptions extends Model
     protected $fillable = [
         'type',
         'status',
+        'batch_delay',
         'favourite_streamer_id',
     ];
 
-    protected $casts = [
-        'type' => TwitchSubscriptionType::class,
-    ];
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'type' => TwitchSubscriptionType::class,
+            'batch_delay' => 'integer',
+        ];
+    }
 
     public function favouriteStreamer(): BelongsTo
     {

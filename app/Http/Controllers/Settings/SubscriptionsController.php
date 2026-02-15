@@ -47,6 +47,7 @@ class SubscriptionsController extends Controller
         $validatedEvents = $request->validate([
             'types' => ['present', 'array'],
             'types.*' => ['string', Rule::in(TwitchSubscriptionType::values())],
+            'batch_delay' => ['nullable', 'integer', Rule::in([0, 60, 120, 300, 600])],
         ]);
 
         $appAccessToken = $this->twitchTokenManagerService->ensureFreshAppAccessToken();
@@ -83,6 +84,12 @@ class SubscriptionsController extends Controller
             $this->twitchApiClient->createSubscription($favouriteStreamer->streamer_id, $appAccessToken, $subToAdd);
 
             Log::debug(sprintf('Subscribed to "%s" event subscription for streamer %s', $subToAdd, $favouriteStreamer->streamer_name));
+        }
+
+        if (array_key_exists('batch_delay', $validatedEvents)) {
+            $favouriteStreamer->subscriptions()
+                ->where('type', 'channel.update')
+                ->update(['batch_delay' => $validatedEvents['batch_delay']]);
         }
 
         return back(status: 303);

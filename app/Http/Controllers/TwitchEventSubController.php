@@ -6,12 +6,14 @@ use App\Data\TwitchChannelUpdateMessageData;
 use App\Data\TwitchStreamOnlineWebhookMessageData;
 use App\Enums\TwitchSubscriptionStatus;
 use App\Http\Requests\TwitchEventSubRequest;
+use App\Jobs\SendBatchedChannelUpdateNotification;
 use App\Models\FavouriteStreamer;
 use App\Models\TwitchEvent;
 use App\Notifications\TwitchChannelUpdatedNotification;
 use App\Notifications\TwitchStreamerStreamStartedNotification;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
 class TwitchEventSubController extends Controller
@@ -174,9 +176,24 @@ class TwitchEventSubController extends Controller
         ]);
 
         $favouriteStreamers->each(
-            function (FavouriteStreamer $favouriteStreamer) use ($channelUpdateMessage) {
-                $favouriteStreamer->subscriptions()->where('type', 'channel.update')->update(['status' => TwitchSubscriptionStatus::ENABLED]);
-                $favouriteStreamer->user->notifyNow(new TwitchChannelUpdatedNotification($channelUpdateMessage));
+            function (FavouriteStreamer $favouriteStreamer) use ($channelUpdateMessage, $subscription) {
+                $sub = $favouriteStreamer->subscriptions()->where('type', 'channel.update')->first();
+
+                $sub?->update(['status' => TwitchSubscriptionStatus::ENABLED]);
+
+                $batchDelay = $sub?->batch_delay;
+
+                if ($batchDelay && $batchDelay > 0) {
+                    $cacheKey = "channel_update_batch:{$favouriteStreamer->id}";
+                    $cached = Cache::get($cacheKey, []);
+                    $cached[] = $subscription;
+                    Cache::put($cacheKey, $cached, $batchDelay + 60);
+
+                    SendBatchedChannelUpdateNotification::dispatch($favouriteStreamer->id)
+                        ->delay(now()->addSeconds($batchDelay));
+                } else {
+                    $favouriteStreamer->user->notifyNow(new TwitchChannelUpdatedNotification($channelUpdateMessage));
+                }
             }
         );
     }

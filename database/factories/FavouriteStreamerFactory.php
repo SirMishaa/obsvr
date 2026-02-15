@@ -18,7 +18,7 @@ class FavouriteStreamerFactory extends Factory
     public function definition(): array
     {
         return [
-            'userId' => User::factory(),
+            'user_id' => User::factory(),
             'streamer_id' => $this->faker->word(),
             'streamer_name' => $this->faker->word(),
             'subscription_status' => $this->faker->randomElement(TwitchSubscriptionStatus::values()),

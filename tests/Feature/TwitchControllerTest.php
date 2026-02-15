@@ -39,10 +39,10 @@ test('authenticated users can access twitch page', function () {
         ->assertSuccessful()
         ->assertInertia(fn ($page) => $page
             ->component('Twitch')
-            ->has('followedStreamers')
             ->has('statusOfFollowedStreamers')
             ->has('favoriteStreamers')
             ->has('subscriptions')
+            ->has('scheduledStreams')
         );
 });
 

@@ -57,6 +57,7 @@ export interface Subscription {
     favourite_streamer_id: number;
     type: 'stream.online' | 'stream.offline' | 'channel.update';
     status: 'subscribed' | 'unsubscribed' | 'webhook_callback_verification_pending' | 'enabled';
+    batch_delay: number | null;
     created_at: string;
     updated_at: string;
 }

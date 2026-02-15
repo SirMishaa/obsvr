@@ -22,23 +22,34 @@ const breadcrumbItems: BreadcrumbItem[] = [
 ];
 
 const selections = ref<Record<number, any[]>>(
+    Object.fromEntries(props.favouriteStreamers.map((s) => [s.streamer_id, s.subscriptions.map((sub) => sub.type)])),
+);
+
+const batchDelays = ref<Record<number, string>>(
     Object.fromEntries(
-        props.favouriteStreamers.map((s) => [
-            s.streamer_id,
-            s.subscriptions
-                //.filter((sub) => sub.status === 'enabled')
-                .map((sub) => sub.type),
-        ]),
+        props.favouriteStreamers.map((s) => {
+            const channelUpdateSub = s.subscriptions.find((sub) => sub.type === 'channel.update');
+            return [s.streamer_id, String(channelUpdateSub?.batch_delay ?? 0)];
+        }),
     ),
 );
+
+const BATCH_DELAY_OPTIONS = [
+    { value: '0', label: 'Immediate' },
+    { value: '60', label: '1 min' },
+    { value: '120', label: '2 min' },
+    { value: '300', label: '5 min' },
+    { value: '600', label: '10 min' },
+];
 
 const EVENT_TYPES = new Set(['stream.online', 'stream.offline', 'channel.update']);
 
 function submit(subscriptionId: number, streamerId: number) {
     const selected = selections.value[streamerId] ?? [];
+    const batchDelay = parseInt(batchDelays.value[streamerId] ?? '0', 10);
     router.put(
         update({ id: subscriptionId }),
-        { favourite_streamer_id: subscriptionId, types: selected },
+        { favourite_streamer_id: subscriptionId, types: selected, batch_delay: batchDelay || null },
         { preserveScroll: true, showProgress: true },
     );
 }
@@ -71,19 +82,38 @@ function submit(subscriptionId: number, streamerId: number) {
                                         <small class="ml-1.5 text-gray-500">({{ subscription.status }})</small>
                                     </li>
                                 </template>-->
-                                <li class="mt-1 flex items-center">
+                                <li class="mt-1 flex items-center gap-2">
                                     <Form
                                         :action="update({ id: streamer.id })"
                                         method="post"
-                                        :transform="(data) => ({ ...data, types: selections[streamer.streamer_id] })"
+                                        :transform="
+                                            (data) => ({
+                                                ...data,
+                                                types: selections[streamer.streamer_id],
+                                                batch_delay: parseInt(batchDelays[streamer.streamer_id] ?? '0', 10) || null,
+                                            })
+                                        "
+                                        class="flex items-center gap-2"
                                     >
                                         <!-- FIXME: For a unknown reason, the select component is not passed to the form, even with name attribute -->
                                         <Select :multiple="true" v-model="selections[streamer.streamer_id]">
                                             <SelectItem v-for="event in EVENT_TYPES" :key="event" :value="event">{{ event }}</SelectItem>
                                         </Select>
+                                        <Select
+                                            v-if="selections[streamer.streamer_id]?.includes('channel.update')"
+                                            v-model="batchDelays[streamer.streamer_id]"
+                                        >
+                                            <SelectItem
+                                                class="cursor-pointer"
+                                                v-for="opt in BATCH_DELAY_OPTIONS"
+                                                :key="opt.value"
+                                                :value="opt.value"
+                                                >{{ opt.label }}</SelectItem
+                                            >
+                                        </Select>
                                         <button
                                             type="submit"
-                                            class="mx-2 inline-flex h-8 w-8 items-center justify-center rounded-md bg-green-100 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-100"
+                                            class="mx-2 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-green-100 text-xs font-medium text-green-800 dark:bg-green-900 dark:text-green-100"
                                         >
                                             ✓
                                         </button>
