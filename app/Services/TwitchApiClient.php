@@ -11,6 +11,7 @@ use App\Exceptions\TwitchUnauthorizedException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
+use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -111,16 +112,54 @@ readonly class TwitchApiClient
      * @param  string  $token  The authentication token used for the API request.
      * @return array<int, array{broadcasterId: string, broadcasterName: string, broadcasterLogin: string, nextSegment: array{id: string, startTime: string, endTime: string, title: string, canceledUntil: string|null, category: array{id: string, name: string}|null, isRecurring: bool}}> Array of scheduled streams with camelCase keys for frontend compatibility.
      */
-    public function getScheduledStreamsForBroadcasters(array $broadcasterIds, string $token): array
+    public function getScheduledStreamsForBroadcasters(array $broadcasterIds, string $token, int $ttlFromNow = 7200): array
     {
-        $scheduledStreams = [];
+        $cached = [];
+        $uncachedIds = [];
 
         foreach ($broadcasterIds as $broadcasterId) {
-            $schedule = $this->getBroadcastSchedule($broadcasterId, $token);
+            $cacheKey = sprintf('twitch.broadcast_schedule.%s', $broadcasterId);
+            if (Cache::has($cacheKey)) {
+                $cached[$broadcasterId] = Cache::get($cacheKey);
+            } else {
+                $uncachedIds[] = $broadcasterId;
+            }
+        }
 
-            if (! $schedule) {
+        if (! empty($uncachedIds)) {
+            $responses = Http::pool(fn (Pool $pool) => collect($uncachedIds)->map(
+                fn (string $id) => $pool->as($id)
+                    ->withHeaders([
+                        'Client-Id' => $this->clientId,
+                        'Authorization' => "Bearer {$token}",
+                    ])
+                    ->acceptJson()
+                    ->get((string) $this->baseUrl->withPath('/helix/schedule')->withQuery(['broadcaster_id' => $id]))
+            )->all());
+
+            foreach ($uncachedIds as $broadcasterId) {
+                $cacheKey = sprintf('twitch.broadcast_schedule.%s', $broadcasterId);
+                $response = $responses[$broadcasterId] ?? null;
+
+                if ($response && $response->successful()) {
+                    $data = $response->json();
+                    Cache::put($cacheKey, $data, Carbon::now()->addSeconds($ttlFromNow));
+                    $cached[$broadcasterId] = $data;
+                } else {
+                    Cache::put($cacheKey, null, Carbon::now()->addSeconds((int) ($ttlFromNow / 2)));
+                    $cached[$broadcasterId] = null;
+                }
+            }
+        }
+
+        $scheduledStreams = [];
+
+        foreach ($cached as $response) {
+            if (! $response) {
                 continue;
             }
+
+            $schedule = TwitchBroadcastScheduleResponse::from($response);
 
             $nextSegment = collect($schedule->data['segments'] ?? [])
                 ->filter(fn ($seg) => ! $seg['canceled_until'] && Carbon::parse($seg['start_time'])->isFuture())
@@ -128,7 +167,6 @@ readonly class TwitchApiClient
                 ->first();
 
             if ($nextSegment) {
-                // Map to camelCase keys for frontend, maybe could be improved by using DTOs
                 $scheduledStreams[] = [
                     'broadcasterId' => $schedule->data['broadcaster_id'],
                     'broadcasterName' => $schedule->data['broadcaster_name'],
