@@ -6,7 +6,7 @@ import AppLayout from '@/layouts/AppLayout.vue';
 import { type BreadcrumbItem, ScheduledStream } from '@/types';
 import { levenshteinDistance, urlBase64ToUint8Array } from '@/utils';
 import { Head, router } from '@inertiajs/vue3';
-import { Clock, Eye } from 'lucide-vue-next';
+import { Clock, Eye, Star } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
 
 interface FollowedStreamer {
@@ -246,13 +246,6 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                     v-for="streamer in statusOfFollowedStreamersComp"
                     :key="streamer.userId"
                     @click.exact="() => redirectToTwitch(streamer.userName)"
-                    @click.ctrl="
-                        () =>
-                            toggleFavoriteStreamerRework({
-                                streamerId: streamer.userId,
-                                streamerName: streamer.userName,
-                            })
-                    "
                     class="group flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
                     :class="{
                         'favorite-border': props.favoriteStreamers.includes(streamer.userId),
@@ -293,6 +286,25 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                             <div class="h-2 w-2 animate-pulse rounded-full bg-white text-xs"></div>
                             RealTime
                         </div>
+                        <button
+                            class="absolute bottom-2 left-2 z-10 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-black/60 transition-colors hover:bg-black/80"
+                            @click.stop="
+                                toggleFavoriteStreamerRework({
+                                    streamerId: streamer.userId,
+                                    streamerName: streamer.userName,
+                                })
+                            "
+                        >
+                            <Star
+                                :size="16"
+                                :class="
+                                    props.favoriteStreamers.includes(streamer.userId)
+                                        ? 'text-yellow-400'
+                                        : 'text-white'
+                                "
+                                :fill="props.favoriteStreamers.includes(streamer.userId) ? 'currentColor' : 'none'"
+                            />
+                        </button>
                         <StreamHistoryDialog
                             v-if="props.favoriteStreamers.includes(streamer.userId)"
                             :streamer-id="streamer.userId"
