@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('favourite_streamers', function (Blueprint $table) {
+        Schema::create('favourite_streamers', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('streamer_name');

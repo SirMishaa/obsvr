@@ -27,7 +27,7 @@ class SendNotification extends Command
      */
     public function handle(): void
     {
-        $user = User::where(['email' => 'mishaa.pro@proton.me'])->firstOrFail();
+        $user = User::query()->where(['email' => 'mishaa.pro@proton.me'])->firstOrFail();
 
         $user->notifyNow(new TwitchStreamerStreamStartedNotification('testBroadcaster'));
 

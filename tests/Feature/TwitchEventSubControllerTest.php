@@ -1,19 +1,19 @@
 <?php
 
+use Illuminate\Support\Facades\Date;
 use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
 use App\Models\TwitchEvent;
-use Carbon\Carbon;
 
-beforeEach(function () {
-    Carbon::setTestNow('2025-11-16 13:00:00');
+beforeEach(function (): void {
+    Date::setTestNow('2025-11-16 13:00:00');
     $this->withoutMiddleware(VerifyTwitchEventSubSignatureMiddleware::class);
 });
 
-afterEach(function () {
-    Carbon::setTestNow();
+afterEach(function (): void {
+    Date::setTestNow();
 });
 
-test('stream.online event is stored in database', function () {
+test('stream.online event is stored in database', function (): void {
     $payload = buildTwitchWebhookPayload('stream.online', [
         'id' => 'stream-123',
         'broadcaster_user_id' => '123456',
@@ -32,9 +32,9 @@ test('stream.online event is stored in database', function () {
 
     $response->assertNoContent();
 
-    expect(TwitchEvent::count())->toBe(1);
+    expect(TwitchEvent::query()->count())->toBe(1);
 
-    $event = TwitchEvent::first();
+    $event = TwitchEvent::query()->first();
     expect($event->event_id)->toBe('stream-123');
     expect($event->event_type)->toBe('stream.online');
     expect($event->streamer_id)->toBe('123456');
@@ -44,7 +44,7 @@ test('stream.online event is stored in database', function () {
     expect($event->received_at)->not->toBeNull();
 });
 
-test('stream.offline event is stored in database', function () {
+test('stream.offline event is stored in database', function (): void {
     $payload = buildTwitchWebhookPayload('stream.offline', [
         'id' => 'stream-456',
         'broadcaster_user_id' => '789012',
@@ -61,16 +61,16 @@ test('stream.offline event is stored in database', function () {
 
     $response->assertNoContent();
 
-    expect(TwitchEvent::count())->toBe(1);
+    expect(TwitchEvent::query()->count())->toBe(1);
 
-    $event = TwitchEvent::first();
+    $event = TwitchEvent::query()->first();
     expect($event->event_id)->toBe('stream-456');
     expect($event->event_type)->toBe('stream.offline');
     expect($event->streamer_id)->toBe('789012');
     expect($event->streamer_name)->toBe('AnotherStreamer');
 });
 
-test('channel.update event is stored in database', function () {
+test('channel.update event is stored in database', function (): void {
     $payload = buildTwitchWebhookPayload('channel.update', [
         'id' => 'update-789',
         'broadcaster_user_id' => '345678',
@@ -92,9 +92,9 @@ test('channel.update event is stored in database', function () {
 
     $response->assertNoContent();
 
-    expect(TwitchEvent::count())->toBe(1);
+    expect(TwitchEvent::query()->count())->toBe(1);
 
-    $event = TwitchEvent::first();
+    $event = TwitchEvent::query()->first();
     expect($event->event_id)->toBe('update-789');
     expect($event->event_type)->toBe('channel.update');
     expect($event->streamer_id)->toBe('345678');
@@ -103,7 +103,7 @@ test('channel.update event is stored in database', function () {
     expect($event->payload['category_name'])->toBe('Just Chatting');
 });
 
-test('multiple events are stored separately', function () {
+test('multiple events are stored separately', function (): void {
     $payloads = [
         buildTwitchWebhookPayload('stream.online', [
             'id' => 'event-1',
@@ -142,10 +142,10 @@ test('multiple events are stored separately', function () {
         $response->assertNoContent();
     }
 
-    expect(TwitchEvent::count())->toBe(3);
-    expect(TwitchEvent::where('event_type', 'stream.online')->count())->toBe(1);
-    expect(TwitchEvent::where('event_type', 'channel.update')->count())->toBe(1);
-    expect(TwitchEvent::where('event_type', 'stream.offline')->count())->toBe(1);
+    expect(TwitchEvent::query()->count())->toBe(3);
+    expect(TwitchEvent::query()->where('event_type', 'stream.online')->count())->toBe(1);
+    expect(TwitchEvent::query()->where('event_type', 'channel.update')->count())->toBe(1);
+    expect(TwitchEvent::query()->where('event_type', 'stream.offline')->count())->toBe(1);
 });
 
 /**

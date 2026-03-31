@@ -26,7 +26,7 @@ class SendBatchedChannelUpdateNotification implements ShouldBeUnique, ShouldQueu
 
     public function handle(): void
     {
-        $cacheKey = "channel_update_batch:{$this->favouriteStreamerId}";
+        $cacheKey = 'channel_update_batch:' . $this->favouriteStreamerId;
 
         /** @var array<int, array<string, mixed>>|null $updates */
         $updates = Cache::pull($cacheKey);
@@ -40,7 +40,7 @@ class SendBatchedChannelUpdateNotification implements ShouldBeUnique, ShouldQueu
         }
 
         $messages = array_map(
-            fn (array $data) => TwitchChannelUpdateMessageData::from($data),
+            TwitchChannelUpdateMessageData::from(...),
             $updates,
         );
 

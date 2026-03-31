@@ -21,14 +21,14 @@ return new class extends Migration
             )
         ');
 
-        Schema::table('subscriptions', function (Blueprint $table) {
+        Schema::table('subscriptions', function (Blueprint $table): void {
             $table->unique(['favourite_streamer_id', 'type']);
         });
     }
 
     public function down(): void
     {
-        Schema::table('subscriptions', function (Blueprint $table) {
+        Schema::table('subscriptions', function (Blueprint $table): void {
             $table->dropUnique(['favourite_streamer_id', 'type']);
         });
     }

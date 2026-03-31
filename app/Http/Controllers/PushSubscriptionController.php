@@ -2,18 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class PushSubscriptionController extends Controller
 {
-    public function __invoke(Request $request): \Illuminate\Http\RedirectResponse
+    public function __invoke(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'endpoint' => 'required|string',
-            'keys.p256dh' => 'required|string',
-            'keys.auth' => 'required|string',
+            'endpoint' => ['required', 'string'],
+            'keys.p256dh' => ['required', 'string'],
+            'keys.auth' => ['required', 'string'],
         ]);
 
         $user = Auth::user();

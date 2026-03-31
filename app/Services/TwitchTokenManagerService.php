@@ -2,13 +2,14 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Carbon;
 use App\Models\User;
 use Error;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\TwitchProvider;
-use Log;
 use Throwable;
 
 class TwitchTokenManagerService
@@ -16,8 +17,6 @@ class TwitchTokenManagerService
     const int MIN_USER_TOKEN_VALIDITY_SECONDS = 900;
 
     const int MIN_APP_TOKEN_VALIDITY_SECONDS = 3600;
-
-    public function __construct() {}
 
     /**
      * Ensures that the provided user's access tokens are fresh and valid.
@@ -27,11 +26,7 @@ class TwitchTokenManagerService
      * using the provided refresh token.
      *
      * @param  User  $user  The user whose access tokens need to be validated and possibly refreshed.
-     * @return array{
-     *     access_token: string,
-     *     refresh_token: string,
-     *     expires_at: \Illuminate\Support\Carbon,
-     * } An array containing the access token, refresh token, and expiration Carbon instance.
+     * @return array{access_token: string, refresh_token: string, expires_at: Carbon} An array containing the access token, refresh token, and expiration Carbon instance.
      *
      * @throws Error|Throwable If the access token or refresh token is missing or if refreshing the tokens fails.
      */
@@ -41,9 +36,7 @@ class TwitchTokenManagerService
         $refreshToken = $user->auth_provider_refresh_token;
         $expiresAt = $user->auth_provider_expires_at;
 
-        if (empty($accessToken) || empty($refreshToken)) {
-            throw new Error('Access token or refresh token is missing.');
-        }
+        throw_if(empty($accessToken) || empty($refreshToken), Error::class, 'Access token or refresh token is missing.');
 
         /**
          * Token is valid if it is not expired and has at least N MIN minutes of validity.
@@ -85,10 +78,10 @@ class TwitchTokenManagerService
                 'expires_at' => now()->addSeconds($tokens->expiresIn),
             ];
 
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             $this->clearTokens($user);
-            Log::warning('Failed to refresh Twitch tokens for user '.$user->id.': '.$e->getMessage());
-            throw $e;
+            Log::warning('Failed to refresh Twitch tokens for user '.$user->id.': '.$throwable->getMessage());
+            throw $throwable;
         }
     }
 
@@ -107,9 +100,7 @@ class TwitchTokenManagerService
                 ->throw()
                 ->json();
 
-            if (empty($response['access_token']) || empty($response['expires_in'])) {
-                throw new Error('Failed to get an app access token from Twitch');
-            }
+            throw_if(empty($response['access_token']) || empty($response['expires_in']), Error::class, 'Failed to get an app access token from Twitch');
 
             $ttl = (int) $response['expires_in'] - self::MIN_APP_TOKEN_VALIDITY_SECONDS;
             $formattedExpiresAt = now()->addSeconds($ttl);

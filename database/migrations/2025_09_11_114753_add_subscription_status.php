@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('favourite_streamers', function (Blueprint $table) {
+        Schema::table('favourite_streamers', function (Blueprint $table): void {
             $table->enum('subscription_status', [
                 'enabled',                                   // Subscription is active and working
                 'webhook_callback_verification_pending',     // Waiting for callback URL verification
@@ -27,7 +27,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('favourite_streamers', function (Blueprint $table) {
+        Schema::table('favourite_streamers', function (Blueprint $table): void {
             $table->dropColumn('subscription_status');
         });
     }

@@ -66,7 +66,7 @@ class TwitchEventFactory extends Factory
 
     public function streamOnline(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $streamer = $this->getStreamerFromAttributes($attributes);
 
             return [
@@ -78,7 +78,7 @@ class TwitchEventFactory extends Factory
 
     public function streamOffline(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $streamer = $this->getStreamerFromAttributes($attributes);
 
             return [
@@ -90,7 +90,7 @@ class TwitchEventFactory extends Factory
 
     public function channelUpdate(): static
     {
-        return $this->state(function (array $attributes) {
+        return $this->state(function (array $attributes): array {
             $streamer = $this->getStreamerFromAttributes($attributes);
 
             return [

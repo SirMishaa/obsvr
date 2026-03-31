@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\TwitchController;
@@ -7,22 +8,19 @@ use App\Http\Controllers\TwitchEventSubController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome');
-})->name('home');
+Route::get('/', fn() => Inertia::render('Welcome'))->name('home');
 
 Route::get('/.well-known/appspecific/com.chrome.devtools.json', function () {
     if (app()->environment('local')) {
         return redirect()->away('http://localhost:5173/.well-known/appspecific/com.chrome.devtools.json', 307);
     }
+
     abort(404);
 })->name('devtools');
 
-Route::get('dashboard', function () {
-    return redirect()->route('twitch');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', fn() => to_route('twitch'))->middleware(['auth', 'verified'])->name('dashboard');
 
-Route::prefix('twitch')->group(function () {
+Route::prefix('twitch')->group(function (): void {
     Route::get('/', [TwitchController::class, 'index'])
         ->middleware(['auth', 'verified'])
         ->name('twitch');
@@ -36,7 +34,7 @@ Route::prefix('twitch')->group(function () {
 
 Route::prefix('auth/{provider}')
     ->where(['provider' => 'twitch'])
-    ->group(function () {
+    ->group(function (): void {
         Route::get('redirect', [SocialiteController::class, 'redirect'])
             ->middleware(['guest'])
             ->name('socialite.redirect');
@@ -50,7 +48,7 @@ Route::post('push/subscribe', [PushSubscriptionController::class, '__invoke'])
     ->name('push.subscription');
 
 Route::post('twitch/eventsub', [TwitchEventSubController::class, 'handle'])
-    ->middleware(\App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware::class)
+    ->middleware(VerifyTwitchEventSubSignatureMiddleware::class)
     ->name('twitch.eventsub');
 
 require __DIR__.'/settings.php';

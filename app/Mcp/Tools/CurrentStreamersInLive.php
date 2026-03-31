@@ -44,17 +44,17 @@ class CurrentStreamersInLive extends Tool
         }
 
         /** @var User|null $user */
-        $user = User::find($userId);
+        $user = User::query()->find($userId);
 
         if (empty($user)) {
-            return Response::text("User with ID $userId not found.");
+            return Response::text(sprintf('User with ID %s not found.', $userId));
         }
 
         try {
             $this->tokenManagerService->ensureFreshUserAccessTokens($user);
             $this->tokenManagerService->ensureFreshAppAccessToken();
-        } catch (Throwable $e) {
-            return Response::text('Failed to ensure fresh tokens: '.$e->getMessage());
+        } catch (Throwable $throwable) {
+            return Response::text('Failed to ensure fresh tokens: '.$throwable->getMessage());
         }
 
         $user->refresh();
@@ -66,7 +66,7 @@ class CurrentStreamersInLive extends Tool
     /**
      * Get the tool's input schema.
      *
-     * @return array<string, \Illuminate\JsonSchema\JsonSchema>
+     * @return array<string, JsonSchema>
      */
     public function schema(JsonSchema $schema): array
     {
@@ -93,19 +93,19 @@ class CurrentStreamersInLive extends Tool
         /** @var Collection<int, TwitchStreamData> $sortedStreamers */
         $sortedStreamers = $collection->sortByDesc('viewerCount');
 
-        $formattedList = "## Currently Live Streamers ($totalStreamers)\n";
+        $formattedList = "## Currently Live Streamers ({$totalStreamers})\n";
         $formattedList .= 'Total viewers: '.number_format($totalViewers)."\n\n";
 
         foreach ($sortedStreamers as $streamer) {
             $duration = $streamer->startedAt->diffForHumans(['short' => true]);
             $viewers = number_format($streamer->viewerCount);
 
-            $formattedList .= "### $streamer->userName\n";
-            $formattedList .= "- Title: $streamer->title\n";
-            $formattedList .= "- Game: $streamer->gameName\n";
-            $formattedList .= "- Viewers: $viewers\n";
-            $formattedList .= "- Started: $duration\n";
-            $formattedList .= "- Language: $streamer->language\n";
+            $formattedList .= sprintf('### %s%s', $streamer->userName, PHP_EOL);
+            $formattedList .= sprintf('- Title: %s%s', $streamer->title, PHP_EOL);
+            $formattedList .= sprintf('- Game: %s%s', $streamer->gameName, PHP_EOL);
+            $formattedList .= sprintf('- Viewers: %s%s', $viewers, PHP_EOL);
+            $formattedList .= sprintf('- Started: %s%s', $duration, PHP_EOL);
+            $formattedList .= sprintf('- Language: %s%s', $streamer->language, PHP_EOL);
 
             if ($streamer->isMature) {
                 $formattedList .= "- Mature content: Yes\n";

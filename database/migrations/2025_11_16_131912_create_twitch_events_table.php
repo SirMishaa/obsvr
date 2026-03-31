@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('twitch_events', function (Blueprint $table) {
+        Schema::create('twitch_events', function (Blueprint $table): void {
             $table->id();
             $table->string('event_id')->nullable()->unique();
             $table->string('event_type')->index();

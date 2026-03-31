@@ -10,7 +10,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->text('auth_provider_access_token')->nullable()->change();
             $table->text('auth_provider_refresh_token')->nullable()->change();
         });
@@ -18,7 +18,7 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->string('auth_provider_access_token')->nullable()->change();
             $table->string('auth_provider_refresh_token')->nullable()->change();
         });

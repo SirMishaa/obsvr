@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
+use App\Enums\AuthProvider;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -14,9 +14,9 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
  */
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, HasPushSubscriptions, Notifiable;
-
+    use HasFactory;
+    use HasPushSubscriptions;
+    use Notifiable;
     /**
      * The attributes that are mass assignable.
      *
@@ -53,7 +53,7 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
-            'auth_provider' => \App\Enums\AuthProvider::class,
+            'auth_provider' => AuthProvider::class,
             'auth_provider_access_token' => 'encrypted',
             'auth_provider_refresh_token' => 'encrypted',
             'auth_provider_expires_at' => 'immutable_datetime',

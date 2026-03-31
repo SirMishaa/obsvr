@@ -11,14 +11,14 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('subscriptions', function (Blueprint $table) {
+        Schema::table('subscriptions', function (Blueprint $table): void {
             $table->unsignedInteger('batch_delay')->nullable()->after('status');
         });
     }
 
     public function down(): void
     {
-        Schema::table('subscriptions', function (Blueprint $table) {
+        Schema::table('subscriptions', function (Blueprint $table): void {
             $table->dropColumn('batch_delay');
         });
     }

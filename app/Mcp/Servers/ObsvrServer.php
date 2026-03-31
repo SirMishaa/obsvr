@@ -2,6 +2,9 @@
 
 namespace App\Mcp\Servers;
 
+use Laravel\Mcp\Server\Tool;
+use Laravel\Mcp\Server\Resource;
+use Laravel\Mcp\Server\Prompt;
 use App\Mcp\Tools\CurrentStreamersInLive;
 use Laravel\Mcp\Server;
 
@@ -44,7 +47,7 @@ class ObsvrServer extends Server
     /**
      * The tools registered with this MCP server.
      *
-     * @var array<int, class-string<\Laravel\Mcp\Server\Tool>>
+     * @var array<int, class-string<Tool>>
      */
     protected array $tools = [
         CurrentStreamersInLive::class,
@@ -53,7 +56,7 @@ class ObsvrServer extends Server
     /**
      * The resources registered with this MCP server.
      *
-     * @var array<int, class-string<\Laravel\Mcp\Server\Resource>>
+     * @var array<int, class-string<Resource>>
      */
     protected array $resources = [
         //
@@ -62,7 +65,7 @@ class ObsvrServer extends Server
     /**
      * The prompts registered with this MCP server.
      *
-     * @var array<int, class-string<\Laravel\Mcp\Server\Prompt>>
+     * @var array<int, class-string<Prompt>>
      */
     protected array $prompts = [
         //

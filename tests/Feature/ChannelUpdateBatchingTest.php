@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\TwitchTokenManagerService;
 use App\Enums\TwitchSubscriptionStatus;
 use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
 use App\Jobs\SendBatchedChannelUpdateNotification;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
-beforeEach(function () {
+beforeEach(function (): void {
     $this->withoutMiddleware(VerifyTwitchEventSubSignatureMiddleware::class);
 });
 
@@ -44,7 +45,7 @@ function buildChannelUpdatePayload(string $streamerId, string $streamerName): ar
     ];
 }
 
-test('channel.update with no batch_delay sends notification immediately', function () {
+test('channel.update with no batch_delay sends notification immediately', function (): void {
     Notification::fake();
     Bus::fake();
 
@@ -73,7 +74,7 @@ test('channel.update with no batch_delay sends notification immediately', functi
     Bus::assertNotDispatched(SendBatchedChannelUpdateNotification::class);
 });
 
-test('channel.update with batch_delay dispatches delayed job and caches data', function () {
+test('channel.update with batch_delay dispatches delayed job and caches data', function (): void {
     Notification::fake();
     Bus::fake();
 
@@ -99,15 +100,13 @@ test('channel.update with batch_delay dispatches delayed job and caches data', f
     ])->assertNoContent();
 
     Notification::assertNotSentTo($user, TwitchChannelUpdatedNotification::class);
-    Bus::assertDispatched(SendBatchedChannelUpdateNotification::class, function ($job) use ($favouriteStreamer) {
-        return $job->favouriteStreamerId === $favouriteStreamer->id;
-    });
+    Bus::assertDispatched(SendBatchedChannelUpdateNotification::class, fn($job): bool => $job->favouriteStreamerId === $favouriteStreamer->id);
 
-    $cached = Cache::get("channel_update_batch:{$favouriteStreamer->id}");
+    $cached = Cache::get('channel_update_batch:' . $favouriteStreamer->id);
     expect($cached)->toBeArray()->toHaveCount(1);
 });
 
-test('batched job sends notification with accumulated updates', function () {
+test('batched job sends notification with accumulated updates', function (): void {
     Notification::fake();
 
     $user = User::factory()->create();
@@ -140,20 +139,18 @@ test('batched job sends notification with accumulated updates', function () {
         ],
     ];
 
-    Cache::put("channel_update_batch:{$favouriteStreamer->id}", $updates, 300);
+    Cache::put('channel_update_batch:' . $favouriteStreamer->id, $updates, 300);
 
     $job = new SendBatchedChannelUpdateNotification($favouriteStreamer->id);
     $job->handle();
 
-    Notification::assertSentTo($user, TwitchChannelUpdateBatchedNotification::class, function ($notification) {
-        return count($notification->updates) === 2
-            && $notification->updates[1]->title === 'Second Title';
-    });
+    Notification::assertSentTo($user, TwitchChannelUpdateBatchedNotification::class, fn($notification): bool => count($notification->updates) === 2
+        && $notification->updates[1]->title === 'Second Title');
 
-    expect(Cache::get("channel_update_batch:{$favouriteStreamer->id}"))->toBeNull();
+    expect(Cache::get('channel_update_batch:' . $favouriteStreamer->id))->toBeNull();
 });
 
-test('subscription batch_delay can be updated via settings', function () {
+test('subscription batch_delay can be updated via settings', function (): void {
     $user = User::factory()->create();
     $favouriteStreamer = FavouriteStreamer::factory()->create(['user_id' => $user->id,
         'streamer_id' => '99999',
@@ -166,7 +163,7 @@ test('subscription batch_delay can be updated via settings', function () {
         'batch_delay' => null,
     ]);
 
-    $this->mock(\App\Services\TwitchTokenManagerService::class)
+    $this->mock(TwitchTokenManagerService::class)
         ->shouldReceive('ensureFreshAppAccessToken')
         ->andReturn('fake-token');
 

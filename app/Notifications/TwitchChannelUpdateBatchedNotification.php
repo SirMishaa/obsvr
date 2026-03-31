@@ -32,7 +32,7 @@ class TwitchChannelUpdateBatchedNotification extends Notification
             ->withPath($streamerName);
 
         $lines = array_map(
-            fn (TwitchChannelUpdateMessageData $update) => sprintf(
+            fn (TwitchChannelUpdateMessageData $update): string => sprintf(
                 '- "%s" (%s)',
                 $update->title,
                 $update->categoryName,

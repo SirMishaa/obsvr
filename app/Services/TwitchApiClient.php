@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use Illuminate\Support\Facades\Date;
 use App\Data\TwitchBroadcastScheduleResponse;
 use App\Data\TwitchEventSubSubscriptionsResponse;
 use App\Data\TwitchFollowedChannelsPaginatedResponse;
@@ -12,7 +13,6 @@ use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Pool;
-use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -33,9 +33,7 @@ readonly class TwitchApiClient
         $this->baseUrl = config('services.twitch.base_url') ? Uri::of(config('services.twitch.base_url')) : null;
         $this->authUrl = config('services.twitch.auth_url') ? Uri::of(config('services.twitch.auth_url')) : null;
 
-        if (empty($this->clientId) || empty($this->baseUrl)) {
-            throw new RuntimeException('Twitch API client ID or base URL is not configured.');
-        }
+        throw_if($this->clientId === '' || $this->clientId === '0' || empty($this->baseUrl), RuntimeException::class, 'Twitch API client ID or base URL is not configured.');
     }
 
     /**
@@ -50,9 +48,9 @@ readonly class TwitchApiClient
     {
         $cacheKey = sprintf('twitch.followed_channels.%s', $userId);
 
-        $ttl = Carbon::now()->addSeconds($ttlFromNow);
+        $ttl = Date::now()->addSeconds($ttlFromNow);
 
-        $payload = Cache::remember($cacheKey, $ttl, function () use ($userId, $token) {
+        $payload = Cache::remember($cacheKey, $ttl, function () use ($userId, $token): array {
             Log::debug('[TwitchAPI] cache MISS for followed_channels', ['userId' => $userId]);
 
             return $this->fetchAllFollowedStreamers($userId, $token);
@@ -74,7 +72,7 @@ readonly class TwitchApiClient
     {
         $cacheKey = sprintf('twitch.broadcast_schedule.%s', $broadcasterId);
 
-        $response = Cache::remember($cacheKey, Carbon::now()->addSeconds($ttlFromNow), function () use ($broadcasterId, $token, $ttlFromNow, $cacheKey) {
+        $response = Cache::remember($cacheKey, Date::now()->addSeconds($ttlFromNow), function () use ($broadcasterId, $token, $ttlFromNow, $cacheKey): ?array {
             Log::debug('[TwitchAPI] cache MISS for broadcast_schedule', ['broadcasterId' => $broadcasterId]);
 
             $url = $this->baseUrl
@@ -83,19 +81,19 @@ readonly class TwitchApiClient
 
             try {
                 return $this->handleResponse($this->getHttpClient($token), $url);
-            } catch (TwitchApiException $e) {
+            } catch (TwitchApiException $twitchApiException) {
                 /**
                  * If the broadcaster does not have a schedule, Twitch returns a 404.
                  * In this case, we cache a null response for half the TTL duration.
                  * This prevents spamming API calls for broadcasters without schedules.
                  */
-                if ($e->getStatusCode() === 404) {
-                    Cache::put($cacheKey, null, Carbon::now()->addSeconds((int) ($ttlFromNow / 2)));
+                if ($twitchApiException->getStatusCode() === 404) {
+                    Cache::put($cacheKey, null, Date::now()->addSeconds((int) ($ttlFromNow / 2)));
 
                     return null;
                 }
 
-                throw $e;
+                throw $twitchApiException;
             }
         });
 
@@ -126,12 +124,12 @@ readonly class TwitchApiClient
             }
         }
 
-        if (! empty($uncachedIds)) {
+        if ($uncachedIds !== []) {
             $responses = Http::pool(fn (Pool $pool) => collect($uncachedIds)->map(
                 fn (string $id) => $pool->as($id)
                     ->withHeaders([
                         'Client-Id' => $this->clientId,
-                        'Authorization' => "Bearer {$token}",
+                        'Authorization' => 'Bearer ' . $token,
                     ])
                     ->acceptJson()
                     ->get((string) $this->baseUrl->withPath('/helix/schedule')->withQuery(['broadcaster_id' => $id]))
@@ -143,10 +141,10 @@ readonly class TwitchApiClient
 
                 if ($response && $response->successful()) {
                     $data = $response->json();
-                    Cache::put($cacheKey, $data, Carbon::now()->addSeconds($ttlFromNow));
+                    Cache::put($cacheKey, $data, Date::now()->addSeconds($ttlFromNow));
                     $cached[$broadcasterId] = $data;
                 } else {
-                    Cache::put($cacheKey, null, Carbon::now()->addSeconds((int) ($ttlFromNow / 2)));
+                    Cache::put($cacheKey, null, Date::now()->addSeconds((int) ($ttlFromNow / 2)));
                     $cached[$broadcasterId] = null;
                 }
             }
@@ -162,7 +160,7 @@ readonly class TwitchApiClient
             $schedule = TwitchBroadcastScheduleResponse::from($response);
 
             $nextSegment = collect($schedule->data['segments'] ?? [])
-                ->filter(fn ($seg) => ! $seg['canceled_until'] && Carbon::parse($seg['start_time'])->isFuture())
+                ->filter(fn ($seg): bool => ! $seg['canceled_until'] && Date::parse($seg['start_time'])->isFuture())
                 ->sortBy('start_time')
                 ->first();
 
@@ -184,7 +182,7 @@ readonly class TwitchApiClient
             }
         }
 
-        usort($scheduledStreams, fn ($a, $b) => Carbon::parse($a['nextSegment']['startTime']) <=> Carbon::parse($b['nextSegment']['startTime']));
+        usort($scheduledStreams, fn (array $a, array $b): int => Date::parse($a['nextSegment']['startTime']) <=> Date::parse($b['nextSegment']['startTime']));
 
         return $scheduledStreams;
     }
@@ -192,7 +190,7 @@ readonly class TwitchApiClient
     public function getStatusOfFollowedStreamers(string $userId, string $token, int $ttlFromNow = 3600): TwitchStreamPaginatedResponse
     {
         $cacheKey = sprintf('twitch.followed_streams.%s', $userId);
-        $ttl = Carbon::now()->addSeconds($ttlFromNow);
+        $ttl = Date::now()->addSeconds($ttlFromNow);
 
         /**
          * @var array{
@@ -216,7 +214,7 @@ readonly class TwitchApiClient
          *   pagination: array{cursor?: string}
          * } $response
          */
-        $response = Cache::remember($cacheKey, $ttl, function () use ($userId, $token) {
+        $response = Cache::remember($cacheKey, $ttl, function () use ($userId, $token): array {
             Log::debug('[TwitchAPI] cache MISS for followed_streams', ['userId' => $userId]);
             $url = $this->baseUrl
                 ->withPath('/helix/streams/followed')
@@ -428,7 +426,7 @@ readonly class TwitchApiClient
     {
         return Http::withHeaders([
             'Client-Id' => $this->clientId,
-            'Authorization' => "Bearer {$token}",
+            'Authorization' => 'Bearer ' . $token,
         ])->acceptJson();
     }
 
@@ -465,9 +463,7 @@ readonly class TwitchApiClient
                     'response' => $response->body(),
                 ]);
 
-                if ($response->status() === 401) {
-                    throw new TwitchUnauthorizedException('Unauthorized: Invalid or expired token');
-                }
+                throw_if($response->status() === 401, TwitchUnauthorizedException::class, 'Unauthorized: Invalid or expired token');
 
                 throw new TwitchApiException($message, $response->status());
             }
@@ -485,12 +481,11 @@ readonly class TwitchApiClient
             }
 
         } catch (ConnectionException $connectionException) {
-            throw new TwitchApiException('Failed to connect to Twitch API: '.$connectionException->getMessage(), previous: $connectionException);
+            throw new TwitchApiException('Failed to connect to Twitch API: '.$connectionException->getMessage(), $connectionException->getCode(), previous: $connectionException);
         } catch (Exception $exception) {
-            if ($exception instanceof TwitchApiException) {
-                throw $exception;
-            }
-            throw new TwitchApiException($exception->getMessage(), previous: $exception);
+            throw_if($exception instanceof TwitchApiException, $exception);
+
+            throw new TwitchApiException($exception->getMessage(), $exception->getCode(), previous: $exception, $exception);
         }
     }
 
@@ -516,11 +511,7 @@ readonly class TwitchApiClient
              */
             $response = $this->handleResponse($this->getHttpClient($token), $url);
             $expiresIn = $response['expires_in'] ?? 0;
-            if ($expiresIn < $minValidity) {
-                return false;
-            }
-
-            return true;
+            return $expiresIn >= $minValidity;
         } catch (TwitchUnauthorizedException) {
             return false;
         }

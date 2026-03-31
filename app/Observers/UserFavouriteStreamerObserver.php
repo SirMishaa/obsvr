@@ -51,11 +51,11 @@ readonly class UserFavouriteStreamerObserver
                 '[%s] Ensured EventSub stream.online for %s (%s) — %d deleted, new status=%s',
                 self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $deleted, $status ?? 'unknown'
             ));
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             Log::error(sprintf(
                 '[%s] Failed to (re)create EventSub for %s (%s): %s',
-                self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $e->getMessage()
-            ), ['exception' => $e]);
+                self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $throwable->getMessage()
+            ), ['exception' => $throwable]);
         }
     }
 
@@ -80,18 +80,18 @@ readonly class UserFavouriteStreamerObserver
                 '[%s] Removed EventSub for %s (%s) — %d deleted',
                 self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $deleted
             ));
-        } catch (Throwable $e) {
+        } catch (Throwable $throwable) {
             Log::error(sprintf(
                 '[%s] Failed to delete EventSub for %s (%s): %s',
-                self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $e->getMessage()
-            ), ['exception' => $e]);
+                self::class, $favouriteStreamer->streamer_name, $favouriteStreamer->streamer_id, $throwable->getMessage()
+            ), ['exception' => $throwable]);
         }
     }
 
     private function getToken(): ?string
     {
         $token = $this->tokens->ensureFreshAppAccessToken();
-        if (! $token) {
+        if ($token === '' || $token === '0') {
             Log::error(sprintf('[%s] No app access token returned', self::class));
 
             return null;

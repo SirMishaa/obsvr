@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use Throwable;
+use App\Models\User;
 use App\Models\FavouriteStreamer;
 use App\Models\TwitchEvent;
 use App\Services\TwitchApiClient;
@@ -20,19 +22,19 @@ class TwitchController extends Controller
 
     public function index(TwitchTokenManagerService $twitchTokenManagerService): Response|RedirectResponse
     {
-        /** @var \App\Models\User|null $user */
+        /** @var User|null $user */
         $user = auth()->user();
         if (empty($user)) {
-            return redirect()->route('login');
+            return to_route('login');
         }
 
         try {
             $twitchTokenManagerService->ensureFreshUserAccessTokens($user);
             $appToken = $twitchTokenManagerService->ensureFreshAppAccessToken();
-        } catch (\Throwable $e) {
+        } catch (Throwable) {
             auth()->logout();
 
-            return redirect()->route('login');
+            return to_route('login');
         }
 
         /**
@@ -78,15 +80,12 @@ class TwitchController extends Controller
             'streamerName' => ['required', 'string'],
         ]);
 
-        $favorite = FavouriteStreamer::firstOrCreate(
-            [
-                'user_id' => $userId,
-                'streamer_id' => $streamerId,
-            ],
-            [
-                'streamer_name' => $validated['streamerName'],
-            ]
-        );
+        $favorite = FavouriteStreamer::query()->firstOrCreate([
+            'user_id' => $userId,
+            'streamer_id' => $streamerId,
+        ], [
+            'streamer_name' => $validated['streamerName'],
+        ]);
 
         if (! $favorite->wasRecentlyCreated) {
             $favorite->delete();
@@ -101,12 +100,10 @@ class TwitchController extends Controller
      */
     public function getStreamerEvents(FavouriteStreamer $favouriteStreamer): JsonResponse
     {
-        if ($favouriteStreamer->user_id !== auth()->id()) {
-            abort(403);
-        }
+        abort_if($favouriteStreamer->user_id !== auth()->id(), 403);
 
-        $streamerEvents = TwitchEvent::where('streamer_id', $favouriteStreamer->streamer_id)
-            ->orderBy('occurred_at', 'desc')
+        $streamerEvents = TwitchEvent::query()->where('streamer_id', $favouriteStreamer->streamer_id)
+            ->latest('occurred_at')
             ->limit(50)
             ->get(['id', 'event_type', 'payload', 'occurred_at']);
 

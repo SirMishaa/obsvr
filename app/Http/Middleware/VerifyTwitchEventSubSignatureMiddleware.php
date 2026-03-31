@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Date;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -14,8 +14,6 @@ class VerifyTwitchEventSubSignatureMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @return mixed
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -31,7 +29,7 @@ class VerifyTwitchEventSubSignatureMiddleware
             abort(400, $log);
         }
 
-        if (abs(now()->diffInSeconds(Carbon::parse($timestamp))) > 600) {
+        if (abs(now()->diffInSeconds(Date::parse($timestamp))) > 600) {
             $log = sprintf('[%s] Stale timestamp detected for EventSub message ID %s', self::class, $id);
             Log::warning($log);
             abort(412, $log);

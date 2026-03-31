@@ -2,12 +2,15 @@
 
 namespace Database\Factories;
 
+use Illuminate\Support\Facades\Date;
 use App\Enums\TwitchSubscriptionType;
 use App\Models\FavouriteStreamer;
 use App\Models\Subscriptions;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use Illuminate\Support\Carbon;
 
+/**
+ * @extends Factory<Subscriptions>
+ */
 class SubscriptionsFactory extends Factory
 {
     protected $model = Subscriptions::class;
@@ -20,8 +23,8 @@ class SubscriptionsFactory extends Factory
         return [
             'type' => $this->faker->randomElement(TwitchSubscriptionType::values()),
             'status' => $this->faker->word(),
-            'created_at' => Carbon::now(),
-            'updated_at' => Carbon::now(),
+            'created_at' => Date::now(),
+            'updated_at' => Date::now(),
 
             'favourite_streamer_id' => FavouriteStreamer::factory(),
         ];

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Settings;
 
+use Illuminate\Support\Facades\Log;
 use App\Data\TwitchEventSubSubscriptionItemData;
 use App\Enums\TwitchSubscriptionStatus;
 use App\Enums\TwitchSubscriptionType;
@@ -15,7 +16,6 @@ use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
-use Log;
 
 class SubscriptionsController extends Controller
 {
@@ -60,7 +60,7 @@ class SubscriptionsController extends Controller
          * @var Collection<int, TwitchEventSubSubscriptionItemData> $subscriptionToRemove
          */
         $subscriptionToRemove = $currentSubscriptions
-            ->filter(fn (TwitchEventSubSubscriptionItemData $subscription) => ! in_array($subscription->type, $validatedEvents['types'], true));
+            ->reject(fn (TwitchEventSubSubscriptionItemData $subscription): bool => in_array($subscription->type, $validatedEvents['types'], true));
 
         /**
          * Events to add subscriptions for (i.e. events that are in the validatedEvents array but not in the current subscriptions)

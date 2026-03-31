@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Event;
 use SocialiteProviders\Manager\Helpers\ConfigRetriever;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 
-it('registers twitch socialite provider on SocialiteWasCalled event', function () {
+it('registers twitch socialite provider on SocialiteWasCalled event', function (): void {
     Event::fake([SocialiteWasCalled::class]);
 
     $provider = new AppServiceProvider(app());

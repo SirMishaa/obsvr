@@ -24,7 +24,7 @@ class SocialiteController extends Controller
 
     public function redirect(string $provider): RedirectResponse
     {
-        $this->validateOrThrow(compact('provider'));
+        $this->validateOrThrow(['provider' => $provider]);
 
         /** @var AbstractProvider $driver */
         $driver = Socialite::driver($provider);
@@ -39,7 +39,7 @@ class SocialiteController extends Controller
      * Handles callback from an external authentication provider.
      *
      * @param  string  $provider  The authentication provider name.
-     * @return \Illuminate\Http\RedirectResponse The response to redirect to the appropriate route or view.
+     * @return RedirectResponse The response to redirect to the appropriate route or view.
      *
      * @throws ValidationException If the provider validation fails.
      * @throws InvalidStateException If the state of the social authentication is invalid.
@@ -51,7 +51,7 @@ class SocialiteController extends Controller
             /** @var AbstractProvider $driver */
             $driver = Socialite::driver($provider);
 
-            $this->validateOrThrow(compact('provider'));
+            $this->validateOrThrow(['provider' => $provider]);
             /** @var \Laravel\Socialite\Two\User $user */
             $user = $driver->user();
 
@@ -64,10 +64,9 @@ class SocialiteController extends Controller
             }
 
         } catch (InvalidStateException|ValidationException $invalidStateException) {
-            return redirect()
-                ->route('login')
+            return to_route('login')
                 ->withErrors([
-                    'provider' => "Something went wrong: $invalidStateException",
+                    'provider' => 'Something went wrong: ' . $invalidStateException,
                 ]);
         }
 
@@ -76,20 +75,19 @@ class SocialiteController extends Controller
 
         try {
 
-            $dbUser = User::where('auth_provider_id', $user->getId())
+            $dbUser = User::query()->where('auth_provider_id', $user->getId())
                 ->where('auth_provider', AuthProvider::from($provider))
                 ->first();
 
-            $updatedOrCreatedUser = User::updateOrCreate(
-                [
-                    'auth_provider_id' => $user->getId(),
-                    'auth_provider' => AuthProvider::from($provider),
-                ], [
-                    'avatar_url' => $user->getAvatar(),
-                    'name' => $user->getName(),
-                    'email' => $user->getEmail(),
-                    'password' => $dbUser?->password ?: Hash::make(openssl_random_pseudo_bytes(32)),
-                ]);
+            $updatedOrCreatedUser = User::query()->updateOrCreate([
+                'auth_provider_id' => $user->getId(),
+                'auth_provider' => AuthProvider::from($provider),
+            ], [
+                'avatar_url' => $user->getAvatar(),
+                'name' => $user->getName(),
+                'email' => $user->getEmail(),
+                'password' => $dbUser?->password ?: Hash::make(openssl_random_pseudo_bytes(32)),
+            ]);
 
             $updatedOrCreatedUser->forceFill([
                 'auth_provider_access_token' => $user->token,

@@ -12,7 +12,7 @@ return new class extends Migration
     public function up(): void
     {
         //
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->enum('auth_provider', ['twitch'])->nullable();
             $table->string('auth_provider_id')->nullable();
             $table->string('auth_provider_access_token')->nullable()->after('remember_token');
@@ -27,7 +27,7 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::table('users', function (Blueprint $table) {
+        Schema::table('users', function (Blueprint $table): void {
             $table->dropColumn([
                 'auth_provider',
                 'auth_provider_id',

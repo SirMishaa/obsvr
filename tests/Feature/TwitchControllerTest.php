@@ -4,7 +4,7 @@ use App\Models\User;
 use Illuminate\Support\Facades\Http;
 use Tests\Mocks\TwitchApiResponses;
 
-beforeEach(function () {
+beforeEach(function (): void {
     // Use the sync driver for Concurrency in tests to avoid process isolation issues
     config()->set('concurrency.default', 'sync');
 
@@ -19,12 +19,12 @@ beforeEach(function () {
     ]);
 });
 
-test('guests cannot access twitch page', function () {
+test('guests cannot access twitch page', function (): void {
     $this->get(route('twitch'))
         ->assertRedirect(route('login'));
 });
 
-test('authenticated users can access twitch page', function () {
+test('authenticated users can access twitch page', function (): void {
     $user = User::factory()->create([
         'email_verified_at' => now(),
         'auth_provider' => 'twitch',
@@ -46,7 +46,7 @@ test('authenticated users can access twitch page', function () {
         );
 });
 
-test('redirect to the login page when twitch account is not associated', function () {
+test('redirect to the login page when twitch account is not associated', function (): void {
     $user = User::factory()->create([
         'email_verified_at' => now(),
         'auth_provider' => 'twitch',

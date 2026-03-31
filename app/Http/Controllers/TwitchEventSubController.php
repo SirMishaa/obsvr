@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use DateTimeInterface;
 use App\Data\TwitchChannelUpdateMessageData;
 use App\Data\TwitchStreamOnlineWebhookMessageData;
 use App\Enums\TwitchSubscriptionStatus;
@@ -32,7 +33,7 @@ class TwitchEventSubController extends Controller
             Arr::get($validated, 'event.broadcaster_user_name'),
         ];
 
-        $favouriteStreamer = $broadcasterUserId ? FavouriteStreamer::where('streamer_id', $broadcasterUserId)->orWhere([
+        $favouriteStreamer = $broadcasterUserId !== '' && $broadcasterUserId !== '0' ? FavouriteStreamer::query()->where('streamer_id', $broadcasterUserId)->orWhere([
             'streamer_name' => $broadcasterUserName,
         ])->first() : null;
 
@@ -116,7 +117,7 @@ class TwitchEventSubController extends Controller
             occurredAt: $streamOnlineMessage->startedAt,
         );
 
-        $favouriteStreamers = FavouriteStreamer::where('streamer_id', $streamOnlineMessage->broadcasterUserId)
+        $favouriteStreamers = FavouriteStreamer::query()->where('streamer_id', $streamOnlineMessage->broadcasterUserId)
             ->orWhere('streamer_name', $streamOnlineMessage->broadcasterUserName)
             ->with('user')
             ->get();
@@ -127,7 +128,7 @@ class TwitchEventSubController extends Controller
             $favouriteStreamers->count()));
 
         $favouriteStreamers->each(
-            function (FavouriteStreamer $favouriteStreamer) {
+            function (FavouriteStreamer $favouriteStreamer): void {
                 $favouriteStreamer->update(['subscription_status' => TwitchSubscriptionStatus::ENABLED]);
                 $favouriteStreamer->user->notifyNow(new TwitchStreamerStreamStartedNotification($favouriteStreamer->streamer_name));
             }
@@ -162,7 +163,7 @@ class TwitchEventSubController extends Controller
             eventId: Arr::get($subscription, 'id'),
         );
 
-        $favouriteStreamers = FavouriteStreamer::where('streamer_id', $channelUpdateMessage->broadcasterUserId)
+        $favouriteStreamers = FavouriteStreamer::query()->where('streamer_id', $channelUpdateMessage->broadcasterUserId)
             ->orWhere('streamer_name', $channelUpdateMessage->broadcasterUserName)
             ->with('user')
             ->get();
@@ -176,7 +177,7 @@ class TwitchEventSubController extends Controller
         ]);
 
         $favouriteStreamers->each(
-            function (FavouriteStreamer $favouriteStreamer) use ($channelUpdateMessage, $subscription) {
+            function (FavouriteStreamer $favouriteStreamer) use ($channelUpdateMessage, $subscription): void {
                 $sub = $favouriteStreamer->subscriptions()->where('type', 'channel.update')->first();
 
                 $sub?->update(['status' => TwitchSubscriptionStatus::ENABLED]);
@@ -184,12 +185,12 @@ class TwitchEventSubController extends Controller
                 $batchDelay = $sub?->batch_delay;
 
                 if ($batchDelay && $batchDelay > 0) {
-                    $cacheKey = "channel_update_batch:{$favouriteStreamer->id}";
+                    $cacheKey = 'channel_update_batch:' . $favouriteStreamer->id;
                     $cached = Cache::get($cacheKey, []);
                     $cached[] = $subscription;
                     Cache::put($cacheKey, $cached, $batchDelay + 60);
 
-                    SendBatchedChannelUpdateNotification::dispatch($favouriteStreamer->id)
+                    dispatch(new SendBatchedChannelUpdateNotification($favouriteStreamer->id))
                         ->delay(now()->addSeconds($batchDelay));
                 } else {
                     $favouriteStreamer->user->notifyNow(new TwitchChannelUpdatedNotification($channelUpdateMessage));
@@ -207,9 +208,9 @@ class TwitchEventSubController extends Controller
         ?string $streamerName,
         array $payload,
         ?string $eventId = null,
-        ?\DateTimeInterface $occurredAt = null,
+        ?DateTimeInterface $occurredAt = null,
     ): TwitchEvent {
-        return TwitchEvent::create([
+        return TwitchEvent::query()->create([
             'event_id' => $eventId,
             'event_type' => $eventType,
             'streamer_id' => $streamerId,
