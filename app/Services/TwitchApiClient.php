@@ -485,7 +485,7 @@ readonly class TwitchApiClient
         } catch (Exception $exception) {
             throw_if($exception instanceof TwitchApiException, $exception);
 
-            throw new TwitchApiException($exception->getMessage(), $exception->getCode(), previous: $exception, $exception);
+            throw new TwitchApiException($exception->getMessage(), $exception->getCode(), previous: $exception);
         }
     }
 
