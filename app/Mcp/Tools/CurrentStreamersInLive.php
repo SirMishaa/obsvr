@@ -18,7 +18,9 @@ use Throwable;
 #[IsOpenWorld]
 class CurrentStreamersInLive extends Tool
 {
-    public function __construct(private readonly TwitchTokenManagerService $tokenManagerService, private readonly TwitchApiClient $twitchApiClient) {}
+    public function __construct(private readonly TwitchTokenManagerService $tokenManagerService, private readonly TwitchApiClient $twitchApiClient)
+    {
+    }
 
     /**
      * The tool's description.
@@ -54,7 +56,7 @@ class CurrentStreamersInLive extends Tool
             $this->tokenManagerService->ensureFreshUserAccessTokens($user);
             $this->tokenManagerService->ensureFreshAppAccessToken();
         } catch (Throwable $throwable) {
-            return Response::text('Failed to ensure fresh tokens: '.$throwable->getMessage());
+            return Response::text('Failed to ensure fresh tokens: ' . $throwable->getMessage());
         }
 
         $user->refresh();
@@ -68,7 +70,7 @@ class CurrentStreamersInLive extends Tool
      *
      * @return array<string, JsonSchema>
      */
-    public function schema(JsonSchema $schema): array
+    public function schema(JsonSchema|\Illuminate\Contracts\JsonSchema\JsonSchema $schema): array
     {
         return [
             'user_id' => $schema->integer()
@@ -94,7 +96,7 @@ class CurrentStreamersInLive extends Tool
         $sortedStreamers = $collection->sortByDesc('viewerCount');
 
         $formattedList = "## Currently Live Streamers ({$totalStreamers})\n";
-        $formattedList .= 'Total viewers: '.number_format($totalViewers)."\n\n";
+        $formattedList .= 'Total viewers: ' . number_format($totalViewers) . "\n\n";
 
         foreach ($sortedStreamers as $streamer) {
             $duration = $streamer->startedAt->diffForHumans(['short' => true]);
