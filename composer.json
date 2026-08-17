@@ -11,17 +11,17 @@
     "require": {
         "php": "^8.4",
         "ext-openssl": "*",
-        "erag/laravel-lang-sync-inertia": "^2.0",
-        "inertiajs/inertia-laravel": "^3.0",
-        "laravel-notification-channels/webpush": "^10.5.0",
-        "laravel/framework": "^13.0",
+        "erag/laravel-lang-sync-inertia": "^2.2",
+        "inertiajs/inertia-laravel": "^3.0.1",
+        "laravel-notification-channels/webpush": "^12.1.0",
+        "laravel/framework": "^13.2",
         "laravel/nightwatch": "^1.25.0",
         "laravel/octane": "^2.17.1",
         "laravel/socialite": "^5.26.0",
         "laravel/telescope": "^5.19.0",
         "laravel/tinker": "^3.0",
         "laravel/wayfinder": "^0.1.15",
-        "php-ds/php-ds": "^1.7",
+        "php-ds/php-ds": "^2.0.1",
         "socialiteproviders/twitch": "^5.4.0",
         "spatie/laravel-data": "^4.20.1",
         "tightenco/ziggy": "^2.6.2"
@@ -29,19 +29,19 @@
     "require-dev": {
         "barryvdh/laravel-debugbar": "^4.2.1",
         "barryvdh/laravel-ide-helper": "^3.7.0",
-        "brianium/paratest": "^7.20.0",
+        "brianium/paratest": "^7.24.0",
         "driftingly/rector-laravel": "^2.2",
         "fakerphp/faker": "^1.24.1",
         "larastan/larastan": "^3.9.3",
-        "laravel/boost": "^2.0",
+        "laravel/boost": "^2.4.1",
         "laravel/pail": "^1.2.6",
         "laravel/pint": "^1.29.0",
         "laravel/sail": "^1.55.0",
         "mockery/mockery": "^1.6.12",
         "nunomaduro/collision": "^8.9.1",
-        "pestphp/pest": "^4.4.3",
-        "pestphp/pest-plugin-laravel": "^4.1.0",
-        "phpunit/phpunit": "^12.5.14",
+        "pestphp/pest": "^5.1.1",
+        "pestphp/pest-plugin-laravel": "^5.0.1",
+        "phpunit/phpunit": "13.3.0",
         "rector/rector": "^2.3.9"
     },
     "autoload": {
@@ -116,7 +116,8 @@
         "sort-packages": true,
         "allow-plugins": {
             "pestphp/pest-plugin": true,
-            "php-http/discovery": true
+            "php-http/discovery": true,
+            "tbachert/spi": true
         }
     },
     "minimum-stability": "stable",
