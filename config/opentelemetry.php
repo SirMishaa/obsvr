@@ -161,7 +161,7 @@ return [
             /**
              * Supported protocols: "grpc", "http/protobuf", "http/json"
              */
-            'protocol' => env(Variables::OTEL_EXPORTER_OTLP_PROTOCOL, 'http/protobuf'),
+            'protocol' => env(Variables::OTEL_EXPORTER_OTLP_PROTOCOL, 'http/json'),
             'max_retries' => (int) env('OTEL_EXPORTER_OTLP_MAX_RETRIES', 3),
             'traces_timeout' => (int) env(Variables::OTEL_EXPORTER_OTLP_TRACES_TIMEOUT, env(Variables::OTEL_EXPORTER_OTLP_TIMEOUT, 10000)),
             'traces_headers' => (string) env(Variables::OTEL_EXPORTER_OTLP_TRACES_HEADERS, env(Variables::OTEL_EXPORTER_OTLP_HEADERS, '')),
