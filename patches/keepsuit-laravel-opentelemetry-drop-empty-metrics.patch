@@ -1,6 +1,14 @@
 --- a/src/LaravelOpenTelemetryServiceProvider.php
 +++ b/src/LaravelOpenTelemetryServiceProvider.php
-@@ -239,6 +239,14 @@
+@@ -33,7 +33,6 @@
+ use OpenTelemetry\API\Trace\TracerInterface;
+ use OpenTelemetry\Context\Propagation\NoopTextMapPropagator;
+ use OpenTelemetry\Context\Propagation\TextMapPropagatorInterface;
+-use OpenTelemetry\Contrib\Grpc\GrpcTransportFactory;
+ use OpenTelemetry\Contrib\Otlp\ContentTypes;
+ use OpenTelemetry\Contrib\Otlp\HttpEndpointResolver;
+ use OpenTelemetry\Contrib\Otlp\LogsExporter;
+@@ -239,6 +238,14 @@
              true => new NoopMetricExporter,
              false => $this->buildMetricsExporter(),
          };
@@ -15,3 +23,15 @@
          $this->app->singleton(MetricExporterInterface::class, fn () => $metricsExporter);
          $metricsReader = new ExportingReader($metricsExporter);
          $this->app->singleton(MetricReaderInterface::class, fn () => $metricsReader);
+@@ -384,7 +391,10 @@
+         );
+ 
+         return match ($protocol) {
+-            'grpc' => (new GrpcTransportFactory)->create(
++            // obsvr patch: grpc kept as a lazy, fully-qualified reference (no top-level
++            // `use`) so open-telemetry/transport-grpc (which needs ext-grpc, not
++            // installed) is only required when the grpc protocol is actually selected.
++            'grpc' => (new \OpenTelemetry\Contrib\Grpc\GrpcTransportFactory)->create(
+                 endpoint: $endpoint.OtlpUtil::method($signal),
+                 headers: $headers,
+                 maxRetries: $maxRetries,

@@ -1,12 +1,12 @@
 {
-    "_hash": "4ff7955962b667aabedffedebac5c8aff797a0a69ec1c30302a879b74f5a2407",
+    "_hash": "f355254bbb0ab1458b595e8eb26178364bc70d386adc16a82c94b363a6c9d0b5",
     "patches": {
         "keepsuit/laravel-opentelemetry": [
             {
                 "package": "keepsuit/laravel-opentelemetry",
                 "description": "Drop empty-datapoint metrics before OTLP export (Grafana Cloud/Mimir rejects the whole batch otherwise, e.g. the SDK's own otel.sdk.* self-diagnostics counters)",
                 "url": "patches/keepsuit-laravel-opentelemetry-drop-empty-metrics.patch",
-                "sha256": "0e636ec75c927f64a0d2c0b1d76a7ee87e3bc351d0da800840132df37ee27fb3",
+                "sha256": "8c5aa907a07a1136d91f12ab673997f7280e7b2d23a5aef3fc6ef4e2e96ca372",
                 "depth": 1,
                 "extra": {
                     "provenance": "root"
