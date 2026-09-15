@@ -23,34 +23,7 @@
          $this->app->singleton(MetricExporterInterface::class, fn () => $metricsExporter);
          $metricsReader = new ExportingReader($metricsExporter);
          $this->app->singleton(MetricReaderInterface::class, fn () => $metricsReader);
-@@ -364,6 +371,26 @@
-             Signals::LOGS => $config['logs_protocol'] ?? null,
-         } ?? $config['protocol'] ?? null;
- 
-+        // obsvr diag: non-fatal, so it never blocks the build — just leaves a trail
-+        // if this signal's transport still ends up selecting an unexpected protocol.
-+        fwrite(STDERR, sprintf(
-+            "obsvr diag [buildOtlpTransport]: signal=%s resolved-protocol=%s config-protocol=%s config-signal_protocol=%s env-OTEL_EXPORTER_OTLP_PROTOCOL=%s env-OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=%s env-OTEL_EXPORTER_OTLP_METRICS_PROTOCOL=%s env-OTEL_EXPORTER_OTLP_LOGS_PROTOCOL=%s config()-protocol=%s endpoint=%s\n",
-+            $signal,
-+            var_export($protocol, true),
-+            var_export($config['protocol'] ?? 'UNSET', true),
-+            var_export(match ($signal) {
-+                Signals::TRACE => $config['traces_protocol'] ?? 'UNSET',
-+                Signals::METRICS => $config['metrics_protocol'] ?? 'UNSET',
-+                Signals::LOGS => $config['logs_protocol'] ?? 'UNSET',
-+            }, true),
-+            var_export(getenv('OTEL_EXPORTER_OTLP_PROTOCOL'), true),
-+            var_export(getenv('OTEL_EXPORTER_OTLP_TRACES_PROTOCOL'), true),
-+            var_export(getenv('OTEL_EXPORTER_OTLP_METRICS_PROTOCOL'), true),
-+            var_export(getenv('OTEL_EXPORTER_OTLP_LOGS_PROTOCOL'), true),
-+            var_export(\Illuminate\Support\Facades\Config::get('opentelemetry.exporters.otlp.protocol'), true),
-+            var_export($endpoint, true),
-+        ));
-+
-         $timeoutMillis = match ($signal) {
-             Signals::TRACE => $config['traces_timeout'] ?? 10000,
-             Signals::METRICS => $config['metrics_timeout'] ?? 10000,
-@@ -384,11 +411,23 @@
+@@ -384,11 +391,25 @@
          );
  
          return match ($protocol) {
@@ -59,12 +32,14 @@
 -                headers: $headers,
 -                maxRetries: $maxRetries,
 -            ),
-+            // obsvr patch: grpc's factory is instantiated from a string class name
-+            // (never a literal `new Grpc\GrpcTransportFactory` token) so nothing that
-+            // statically scans this file for class references — Octane's install step
-+            // did, during the production build — requires
-+            // open-telemetry/transport-grpc (and its ext-grpc dependency, which we
-+            // don't have and don't need) unless the grpc protocol is actually selected.
++            // obsvr patch: Laravel Cloud injects OTEL_EXPORTER_OTLP_TRACES_PROTOCOL=grpc
++            // by default (likely for Nightwatch's own collector), overriding our
++            // generic http/json setting for the traces signal specifically — we now
++            // set our own OTEL_EXPORTER_OTLP_TRACES_PROTOCOL to override that back, but
++            // keep this branch lazy (string class name, not a `use` import) as a
++            // defensive fallback: open-telemetry/transport-grpc (and its ext-grpc
++            // dependency, which we don't install) is only required if grpc is ever
++            // actually selected again.
 +            'grpc' => (function () use ($endpoint, $headers, $maxRetries, $signal) {
 +                $grpcTransportFactoryClass = 'OpenTelemetry'.'\\'.'Contrib'.'\\'.'Grpc'.'\\'.'GrpcTransportFactory';
 +

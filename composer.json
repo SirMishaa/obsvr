@@ -23,7 +23,6 @@
         "laravel/telescope": "^5.22.1",
         "laravel/tinker": "^3.0.2",
         "laravel/wayfinder": "^0.1.21",
-        "open-telemetry/transport-grpc": "^1.2",
         "php-ds/php-ds": "^2.0.1",
         "socialiteproviders/twitch": "^5.4.0",
         "spatie/laravel-data": "^4.23.0",
