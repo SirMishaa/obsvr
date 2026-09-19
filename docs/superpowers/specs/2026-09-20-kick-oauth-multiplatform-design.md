@@ -57,6 +57,59 @@ référence architecturale.
     "card" qui n'ont rien à faire là (`min-h-[100vh]`, `border`, `rounded-xl`).
     Ce wrapper est retiré à l'occasion de l'ajout du bouton Kick, sur les deux
     composants, pour ne garder que le `<a>` stylisé en bouton.
+14. **Page Kick séparée** : Kick a sa propre page Inertia (`Kick.vue`) et son
+    propre `KickController` (`index`, `toggleFavoriteStreamer`), sur le même
+    modèle que `TwitchController`/`Twitch.vue`, plutôt qu'une page unifiée
+    multi-plateforme. Un brouillon de `KickController` existe déjà et sert de
+    base (à corriger et brancher sur les interfaces communes).
+
+### Corrections issues de la doc officielle Kick (docs.kick.com)
+
+Consultée pendant l'implémentation, la doc Kick impose plusieurs ajustements
+par rapport aux hypothèses initiales calquées sur Twitch :
+
+- **Pas d'email retourné par Kick** (`socialiteproviders/kick` ne renvoie que
+  `id`, `username`, `account_type`, `media_count`, `avatar`). La colonne
+  `users.email` doit devenir nullable (l'unicité MySQL/SQLite sur une colonne
+  nullable autorise plusieurs `NULL`, donc pas de collision entre comptes
+  Kick sans email).
+- **Scopes différents par plateforme** : Twitch garde
+  `user:read:email`, `user:read:follows`. Kick n'a pas d'équivalent
+  "follows" ; scopes utilisés : `user:read`, `channel:read`,
+  `events:subscribe`. `SocialiteController` doit résoudre les scopes via
+  `StreamingPlatform::oauthScopes(): array` au lieu de la constante unique
+  `self::scopes` actuelle.
+- **Pas de "followed channels" côté Kick** : l'API Kick n'expose aucun
+  endpoint "liste des chaînes suivies par l'utilisateur" (contrairement à
+  Twitch `/helix/channels/followed`). La méthode `getFollowedChannels` de
+  `TwitchApiClient` (utilisée uniquement pour suggérer des favoris depuis les
+  follows Twitch) **reste une méthode Twitch-only, hors interface commune** —
+  YAGNI, pas d'équivalent Kick à construire.
+- **Vérification de statut live unifiée sur liste d'IDs** : Twitch
+  (`/helix/streams?user_id=...`, jusqu'à 100 IDs) et Kick
+  (`/public/v1/users/livestreams?user_id[]=...`, jusqu'à 100 IDs) supportent
+  tous deux une requête groupée par liste d'IDs de streamers. L'interface
+  commune expose donc `getLiveStatusForStreamers(OauthAccount $account, array $streamerIds): StreamCollectionData`,
+  utilisée pour rafraîchir le statut des `FavouriteStreamer` peu importe la
+  plateforme (remplace `getStatusOfFollowedStreamers` dans le contrat commun ;
+  Twitch garde `getStatusOfFollowedStreamers` en plus, en interne à
+  `TwitchApiClient`, pour la page qui liste aussi les chaînes suivies).
+- **Vérification de signature webhook radicalement différente** : Twitch
+  utilise HMAC-SHA256 avec un secret partagé (`Twitch-Eventsub-Message-*`
+  headers). Kick signe avec sa clé **privée RSA** et fournit sa **clé
+  publique** (fixe, embarquée dans le code ou récupérée une fois via
+  `GET https://api.kick.com/public/v1/public-key`) ; la vérification se fait
+  avec `openssl_verify()` sur la concaténation
+  `{Kick-Event-Message-Id}.{Kick-Event-Message-Timestamp}.{raw body}`, signée
+  en SHA256, contre le header `Kick-Event-Signature` (base64). Pas de
+  mécanisme de "challenge" à renvoyer comme Twitch — `KickEventSubController`
+  n'a donc pas de cas `webhook_callback_verification`.
+- **Événements Kick pertinents** : `livestream.status.updated` (contient
+  `is_live: bool`, remplace `stream.online`/`stream.offline` de Twitch) et
+  `livestream.metadata.updated` (titre/catégorie, remplace `channel.update`).
+  Gestion des abonnements via `POST/DELETE /public/v1/events/subscriptions`
+  (liste des events avec version, pas de secret par abonnement comme Twitch
+  EventSub — la sécurité est assurée globalement par la signature RSA).
 
 ## Modèle de données
 
@@ -116,14 +169,16 @@ interface PlatformTokenManager
 
 interface PlatformApiClient
 {
-    public function getStatusOfFollowedStreamers(OauthAccount $account): StreamCollectionData;
+    /**
+     * @param  array<int, string>  $streamerIds  Up to 100 platform-native streamer IDs.
+     */
+    public function getLiveStatusForStreamers(OauthAccount $account, array $streamerIds): StreamCollectionData;
 
-    public function getFollowedChannels(OauthAccount $account): ChannelCollectionData;
+    public function getStatusOfStreamer(string $streamerId, OauthAccount $account): ?StreamData;
 
-    public function getStatusOfStreamer(string $channelId): ?StreamData;
+    public function createEventSubscription(string $streamerId, OauthAccount $account): void;
 
-    // ... reprendre les autres méthodes utiles de TwitchApiClient (schedule,
-    // subscriptions EventSub côté API sortante), signatures platform-agnostic.
+    public function deleteEventSubscription(string $subscriptionId, OauthAccount $account): void;
 }
 
 interface PlatformWebhookVerifier
@@ -218,11 +273,15 @@ codé en dur.
 
 - `TwitchEventSubController` (existant, route `POST twitch/eventsub`) :
   refactor interne pour utiliser `PlatformWebhookVerifierFactory::driver(StreamingPlatform::Twitch)`
-  au lieu de la logique de vérification inline. Comportement HTTP inchangé.
-- **Nouveau** `KickEventSubController` (route `POST kick/eventsub`), même
-  structure, utilise le driver Kick. Nécessite un nouveau middleware
-  `VerifyKickEventSubSignatureMiddleware` (algorithme de signature propre à
-  Kick, à vérifier dans leur doc API au moment de l'implémentation).
+  au lieu de la logique de vérification inline. Comportement HTTP inchangé
+  (garde son cas `webhook_callback_verification`).
+- **Nouveau** `KickEventSubController` (route `POST kick/eventsub`), pas de
+  cas `webhook_callback_verification` (Kick n'a pas de challenge), gère
+  `livestream.status.updated` (→ équivalent stream.online si `is_live: true`,
+  stream.offline sinon) et `livestream.metadata.updated` (→ équivalent
+  channel.update). Nouveau middleware `VerifyKickEventSubSignatureMiddleware`
+  utilisant `openssl_verify()` avec la clé publique Kick (RSA-SHA256, voir
+  section "Corrections" ci-dessus).
 - Les deux controllers partagent :
   - la persistance dans `PlatformEvent` (avec `platform` renseigné),
   - le dispatch de `SendBatchedChannelUpdateNotification` (le job devient
