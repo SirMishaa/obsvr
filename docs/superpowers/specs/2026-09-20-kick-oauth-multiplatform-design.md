@@ -9,10 +9,10 @@ monolithiques, des notifications WebPush nommées `Twitch*` avec des liens en du
 
 Objectif : ajouter Kick (`socialiteproviders/kick` déjà installé côté composer)
 comme deuxième plateforme, à la fois comme méthode de login et comme compte
-liable à un utilisateur déjà connecté (compte "fusionné" Twitch+Kick), sans
-exposer de UI front dédiée à Kick pour le moment. Le système de notifications
-de live doit fonctionner indépendamment de la plateforme dont provient
-l'événement.
+liable à un utilisateur déjà connecté (compte "fusionné" Twitch+Kick), avec un
+bouton "Se connecter avec Kick" sur la page de login (sous le bouton Twitch
+existant). Le système de notifications de live doit fonctionner
+indépendamment de la plateforme dont provient l'événement.
 
 Le code d'implémentation sera écrit par l'utilisateur ; ce document sert de
 référence architecturale.
@@ -48,6 +48,15 @@ référence architecturale.
 11. **Migration de données sans perte** : approche en 2 étapes (voir plan de
     migration ci-dessous), jamais de drop de colonnes tant que le backfill
     n'est pas confirmé.
+12. **Bouton Kick sur la page de login** (`resources/js/pages/auth/Login.vue`),
+    sous le bouton Twitch existant, même mécanique (`redirect('kick').url`).
+    Couleur de marque officielle Kick `#53FC18` (texte noir pour le contraste),
+    logo Kick en SVG inline, même pattern que `ConnectWithTwitch.vue`.
+13. **Fix du wrapper CSS bugué** : `ConnectWithTwitch.vue` (et son usage dans
+    `Welcome.vue`) enveloppe le bouton dans une `<div>` avec des classes de
+    "card" qui n'ont rien à faire là (`min-h-[100vh]`, `border`, `rounded-xl`).
+    Ce wrapper est retiré à l'occasion de l'ajout du bouton Kick, sur les deux
+    composants, pour ne garder que le `<a>` stylisé en bouton.
 
 ## Modèle de données
 
@@ -242,10 +251,32 @@ manuelle entre chaque étape en prod :
 Cette séparation permet un rollback simple entre les étapes 1/2 sans perte, et
 l'étape 3 n'est jouée qu'une fois la donnée validée.
 
+## Page de login (front)
+
+- `resources/js/pages/auth/Login.vue` : ajouter `<ConnectWithKick class="w-full" :redirect="redirect('kick').url" fill />`
+  sous le `<ConnectWithTwitch ... />` existant (ligne ~101).
+- Nouveau composant `resources/js/components/ConnectWithKick.vue`, calqué sur
+  `ConnectWithTwitch.vue` mais :
+  - sans le `<div>` wrapper "card" bugué (fix appliqué aussi à `ConnectWithTwitch.vue`
+    et son usage dans `Welcome.vue`),
+  - couleur de fond `#53FC18` (vert Kick officiel), texte noir, hover légèrement
+    plus sombre,
+  - logo Kick en SVG inline (à récupérer depuis les brand assets officiels Kick),
+  - clé de traduction `app.cta.kick_connect` (à ajouter à côté de
+    `app.cta.twitch_connect`).
+- Backend, en plus des changements déjà listés dans "Flow d'authentification" :
+  - `routes/web.php` : `->where(['provider' => 'twitch'])` → `->where(['provider' => 'twitch|kick'])`.
+  - `SocialiteController::validateOrThrow` : règle `'provider' => ['required', 'string', 'in:twitch']` → `in:twitch,kick`.
+  - `AuthProvider` enum : ajouter `case Kick = 'kick';` (utilisé le temps de la
+    transition ; à terme la source de vérité du provider est `oauth_accounts.provider`).
+  - `config/services.php` : bloc `kick` (client_id, client_secret, redirect,
+    éventuels `auth_url`/`base_url` selon ce qu'expose `socialiteproviders/kick`).
+  - `AppServiceProvider` : enregistrer le listener `SocialiteWasCalled` pour
+    Kick (`KickExtendSocialite::handle`, fourni par le package
+    `socialiteproviders/kick`), à côté de celui de Twitch.
+
 ## Hors scope
 
-- Toute UI front pour connecter/afficher Kick (explicitement exclu par
-  l'utilisateur).
 - Gestion de la révocation/déconnexion d'un provider lié (peut être ajoutée
   plus tard, non traitée ici).
 - Détails exacts de l'API Kick (endpoints, format de signature webhook,
