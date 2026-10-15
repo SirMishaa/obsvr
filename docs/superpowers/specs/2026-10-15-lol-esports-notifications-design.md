@@ -21,8 +21,14 @@ API non officielle utilisée par lolesports.com, clé publique (pas de compte) :
 - `getSchedule?hl=en-GB&leagueId={id}` : events avec `startTime`, `state`
   (`unstarted` | `inProgress` | `completed`), `blockName`, `match.id`,
   `match.strategy.count` (BO), `match.teams[]` (`name`, `code`, `image`, `record`).
-- `getEventDetails?hl=en-GB&id={matchId}` : rafraîchir un match.
-- `getLive?hl=en-GB` : matchs réellement en cours.
+- `getLive?hl=en-GB` : matchs réellement en cours (`events[].id` = id du match,
+  `state: inProgress`).
+- `getEventDetails` n'expose **ni `startTime` ni `state`** : non utilisé.
+- `getSchedule` est paginé (~80 events, `pages.newer`) et partage cette page
+  entre ligues si plusieurs `leagueId` : un appel par ligue, suivre
+  `pageToken={newer}` si la fenêtre voulue n'est pas couverte.
+- Images en `http://static.lolesports.com/...` : réécrites en `https://`.
+- Ids de match à 18 chiffres : toujours des strings (PHP, DB, JS).
 
 Pas de webhook disponible : il faut poller, intelligemment.
 
@@ -50,46 +56,61 @@ probablement jamais traité en prod).
   en < 1 s à l'arrivée d'un job, et ne réveillent pas l'app. Délai par job
   max **15 min** (queue standard, pas FIFO). Durée max d'un job : 90 s.
 
-Décision : une managed queue Flex standard + un job "watcher" par match qui se
-re-dispatch. Polling uniquement autour des matchs, app endormie le reste du temps.
+Décision : une managed queue Flex standard + **un seul job "tick" global** qui
+se re-dispatch tant qu'un match est proche. Polling uniquement autour des
+matchs, app endormie le reste du temps. L'app se réveille déjà toutes les
+heures (`app:report-event-sub-heartbeat` est `hourly()`), la sync horaire ne
+coûte donc rien de plus.
 
 ## Architecture
 
 ```
-Scheduler (dailyAt 07:00 Europe/Brussels → 1 réveil Cloud/jour)
+Scheduler hourly (réveil déjà existant)
   └─ lol:sync-schedule → dispatch SyncLolScheduleJob
 
 SyncLolScheduleJob
-  ├─ getSchedule pour chaque ligue ayant ≥1 abonnement
+  ├─ getSchedule (1 appel/ligue) pour chaque ligue ayant ≥1 abonnement
   ├─ upsert lol_matches (events type=match uniquement)
-  └─ pour chaque match unstarted|inProgress démarrant dans les 36 h
-     et sans watcher actif (lock cache par match) → WatchLolMatchJob
+  └─ si un match unstarted|inProgress a start_time ≤ now + 90 min → dispatch LolTickJob
 
-WatchLolMatchJob(matchId)
-  ├─ getEventDetails → met à jour start_time / state / teams (gère retards, reports)
-  ├─ rappels : pour chaque abonné concerné avec lol_reminder_minutes non null,
-  │  si start_time − offset ≤ now < start_time → LolMatchReminderNotification (dedup)
-  ├─ si now ≥ start_time − 2 min : getLive (ou state de getEventDetails)
-  │  inProgress → LolMatchStartedNotification à tous les abonnés concernés (dedup) → fin
-  ├─ completed → fin (pas de notif de début rattrapée)
-  ├─ sinon re-dispatch avec delay = clamp(prochain moment dû − now, 60 s, 15 min)
-  │  (prochain moment dû = plus proche des start_time − offset en attente, ou start_time − 2 min)
-  │  à partir de start_time − 2 min : delay = 60 s
-  └─ abandon si now > start_time + 4 h
+LolTickJob  (ShouldBeUniqueUntilProcessing, uniqueId 'lol-tick', uniqueFor 20 min)
+  ├─ matchs actifs = lol_matches non notifiés "started", state ≠ completed,
+  │  start_time ∈ [now − 4 h, now + 90 min] ; aucun → fin de chaîne
+  ├─ refresh : getSchedule des ligues concernées → start_time / state / block / teams
+  │  (gère retards et reports ; refresh fait avant la règle d'abandon)
+  ├─ getLive (1 appel) → ids inProgress
+  ├─ par match :
+  │  ├─ completed → marqué traité, pas de notif rattrapée
+  │  ├─ inProgress (getLive ou schedule) → LolMatchStartedNotification aux abonnés concernés
+  │  └─ unstarted → rappels : abonnés concernés avec lol_reminder_minutes non null,
+  │     start_time − offset ≤ now et start_time − now ≥ 1 min → LolMatchReminderNotification
+  │     (minutes affichées = ceil(start_time − now), pas l'offset)
+  └─ re-dispatch LolTickJob avec delay = clamp(prochain moment dû − now, 60 s, 15 min)
+     (prochain moment dû = plus proche start_time − offset en attente, ou start_time − 2 min ;
+      dès start_time − 2 min : 60 s)
 ```
 
-Déclencheurs de sync supplémentaires : à l'enregistrement d'un abonnement
-(l'app est réveillée par la requête), dispatch de `SyncLolScheduleJob` pour
-que les nouveaux abonnés soient couverts sans attendre le lendemain.
+Dedup / at-least-once :
+- Avant chaque push : `insertOrIgnore` dans `lol_match_notifications` ;
+  on n'envoie que si la ligne a été insérée.
+- Le lock `ShouldBeUniqueUntilProcessing` est relâché au début du traitement,
+  donc le re-dispatch depuis `handle()` passe ; un dispatch concurrent (sync,
+  abonnement) est absorbé tant qu'un tick est en attente. **Ne pas** utiliser
+  `ShouldBeUnique` (le re-dispatch serait ignoré et la chaîne mourrait).
+- Les locks utilisent le cache store : `CACHE_STORE=database` (défaut de
+  `config/cache.php`, table `cache_locks`) partagé entre app et compute Flex.
+  Un store `file`/`array` casserait l'unicité.
+- Erreur HTTP / réseau : pas de `release()` (consomme les tentatives) ; on
+  catch, log, et re-dispatch un nouveau tick à 60 s.
+
+Déclencheur supplémentaire : à l'enregistrement d'un abonnement (l'app est
+réveillée par la requête), dispatch de `SyncLolScheduleJob`.
 
 "Abonné concerné" pour un match : utilisateur avec un `lol_league_subscriptions`
 sur la ligue du match, et soit `mode = all`, soit `mode = teams` avec au moins
 un code d'équipe du match dans `team_codes`. Les équipes `TBD` ne matchent jamais.
 
-Erreurs :
-- Erreur HTTP / réseau dans le watcher → `release(60)`, il continue.
-- Erreur dans la sync → log, la prochaine sync rattrape.
-- Jobs idempotents (at-least-once delivery) : dedup via contrainte unique.
+Erreur dans la sync → log, la prochaine sync horaire rattrape.
 
 ## Modèle de données
 
@@ -105,12 +126,12 @@ users
     valeurs proposées : off, 5, 10, 15, 20, 30, 60
 
 lol_matches
-  id (string PK, id lolesports), league (LolLeague), start_time (datetime UTC)
+  id (string PK, id lolesports ; $incrementing=false, $keyType='string'), league (LolLeague), start_time (datetime UTC)
   state (string), block_name (string nullable), best_of (unsigned tinyint nullable)
   teams (json : [{name, code, image}]), timestamps
 
 lol_match_notifications
-  id, lol_match_id (fk), user_id (fk cascade), type (reminder|started)
+  id, lol_match_id (fk string cascade), user_id (fk cascade), type (reminder|started)
   sent_at, unique(lol_match_id, user_id, type)
 ```
 
@@ -119,8 +140,9 @@ lol_match_notifications
 `LolMatchReminderNotification` et `LolMatchStartedNotification`, `WebPushChannel`,
 textes traduits dans `lang/` comme Twitch.
 
-- Rappel : titre « ⏰ KC vs C9 dans 20 min », corps « Worlds · Play-Ins · BO5 · 20:00 » (heure Europe/Brussels).
-- Début : titre « 🔴 KC vs C9 a commencé », corps « Worlds · Play-Ins · BO5 ».
+- Textes dans `lang/en/lol.php` (seule locale existante, comme `twitch.php`).
+- Rappel : titre « ⏰ KC vs C9 in 20 min » (minutes réelles restantes), corps « Worlds · Play-Ins · BO5 · 20:00 » (heure Europe/Brussels).
+- Début : titre « 🔴 KC vs C9 has started », corps « Worlds · Play-Ins · BO5 ».
 - Icône : logo d'une équipe suivie si mode teams, sinon logo de la ligue.
 - Lien / action : `https://twitch.tv/{costream_channel}` si défini
   (« Regarder chez {channel} »), sinon `https://lolesports.com/live/{league}`.
@@ -140,9 +162,9 @@ textes traduits dans `lang/` comme Twitch.
 ## Composants
 
 - `App\Enums\LolLeague`, `App\Enums\LolSubscriptionMode`
-- `App\Services\LolEsportsClient` (readonly, `Http` facade, méthodes `schedule`, `eventDetails`, `live`)
+- `App\Services\LolEsportsClient` (readonly, `Http` facade, méthodes `schedule`, `live`)
 - `App\Models\LolLeagueSubscription`, `App\Models\LolMatch`, `App\Models\LolMatchNotification` (+ factories)
-- `App\Jobs\SyncLolScheduleJob`, `App\Jobs\WatchLolMatchJob`
+- `App\Jobs\SyncLolScheduleJob`, `App\Jobs\LolTickJob`
 - `App\Console\Commands\SyncLolSchedule` (`lol:sync-schedule`)
 - `App\Notifications\LolMatchReminderNotification`, `LolMatchStartedNotification`
 - `App\Http\Controllers\LolController` (index, upsert/delete abonnement)
@@ -154,20 +176,32 @@ Pest, `Http::fake` (réponses API fixtures), `Notification::fake`, `Queue::fake`
 `freezeTime` / `travelTo` :
 
 - sync : upsert des matchs, dispatch des watchers, ligues sans abonné non fetchées.
-- watcher : rappel envoyé au bon moment, une seule fois ; respect de l'offset
+- tick : rappel envoyé au bon moment, une seule fois ; respect de l'offset
   utilisateur et de `null` ; notif de début sur `inProgress` puis plus de
-  re-dispatch ; delay ≤ 15 min ; abandon après 4 h ; `completed` stoppe.
+  re-dispatch ; delay ≤ 15 min ; abandon après 4 h ; `completed` stoppe ;
+  rappel tardif (offset > temps restant) affiche les minutes réelles ;
+  dedup (2 ticks → 1 push) ; erreur HTTP → re-dispatch 60 s.
 - filtre teams (match / pas match / TBD).
 - notification : URL costream vs lolesports, icône.
 - controllers : abonnement (validation, unique), réglage rappel.
 
 ## Déploiement
 
-1. `composer require aws/aws-sdk-php` (requis par les managed queues).
+1. `composer require aws/aws-sdk-php` (requis par les managed queues, absent de `composer.json`).
 2. Créer une managed queue Flex standard sur l'env production (`cloud queue:create`), définie par défaut → Cloud injecte `QUEUE_CONNECTION=cloud`.
+   Effet de bord : `SendBatchedChannelUpdateNotification` sera réellement
+   traité en prod pour la première fois → à surveiller.
 3. Déployer (migrations via deploy command existante ; le scheduler est déjà actif, le nouveau `dailyAt` est capturé au déploiement).
 
 Local : `QUEUE_CONNECTION=database` + `php artisan queue:work` + `php artisan lol:sync-schedule`.
+
+## Phases
+
+- **Phase 1 (ce soir, avant 18:00Z)** : migrations complètes, enums, client,
+  sync + tick, filtre all/teams côté backend, notifications, commande, page
+  `/lol` minimale (toggle par ligue, mode Tous), délai de rappel par défaut 20.
+- **Phase 2** : chips d'équipes + mode Équipes dans l'UI, co-streamer,
+  Settings › League of Legends, liste des matchs à venir.
 
 ## Hors scope
 
