@@ -23,6 +23,7 @@ use NotificationChannels\WebPush\HasPushSubscriptions;
     'auth_provider',
     'auth_provider_id',
     'avatar_url',
+    'lol_reminder_minutes',
 ])]
 #[Hidden([
     'password',
@@ -45,6 +46,14 @@ final class User extends Authenticatable
     }
 
     /**
+     * @return HasMany<LolLeagueSubscription, $this>
+     */
+    public function lolLeagueSubscriptions(): HasMany
+    {
+        return $this->hasMany(LolLeagueSubscription::class);
+    }
+
+    /**
      * Get the attributes that should be cast.
      *
      * @return array<string, string>
@@ -58,6 +67,7 @@ final class User extends Authenticatable
             'auth_provider_access_token' => 'encrypted',
             'auth_provider_refresh_token' => 'encrypted',
             'auth_provider_expires_at' => 'immutable_datetime',
+            'lol_reminder_minutes' => 'integer',
         ];
     }
 }
