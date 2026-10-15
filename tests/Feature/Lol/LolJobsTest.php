@@ -11,6 +11,7 @@ use App\Services\LolEsportsClient;
 use App\Services\LolMatchWatcher;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Tests\Mocks\LolEsportsResponses;
@@ -83,4 +84,17 @@ test('tick survives api errors by retrying in 60 seconds', function (): void {
 test('tick is unique until processing', function (): void {
     expect(class_implements(LolTickJob::class))->toHaveKey(ShouldBeUniqueUntilProcessing::class)
         ->and(new LolTickJob()->uniqueId())->toBe('lol-tick');
+});
+
+test('tick survives unexpected errors by retrying in 60 seconds', function (): void {
+    $this->travelTo('2026-10-15 17:35:00');
+    Queue::fake();
+    Exceptions::fake();
+    LolMatch::factory()->startingAt(now()->parse('2026-10-15 18:00:00'))->create();
+    Http::fake(['*' => fn () => throw new RuntimeException('boom')]);
+
+    new LolTickJob()->handle(resolve(LolMatchWatcher::class));
+
+    Queue::assertPushed(LolTickJob::class, fn (LolTickJob $job): bool => $job->delay === 60);
+    Exceptions::assertReported(RuntimeException::class);
 });

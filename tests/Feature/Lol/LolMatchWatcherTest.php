@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\LolLeagueSubscription;
 use App\Models\LolMatch;
+use App\Models\LolMatchNotification;
 use App\Models\User;
 use App\Notifications\LolMatchReminderNotification;
 use App\Notifications\LolMatchStartedNotification;
@@ -155,4 +156,35 @@ test('team mode subscriber is only notified for followed teams', function (): vo
 
     Notification::assertSentTo($kcFan->user, LolMatchStartedNotification::class);
     Notification::assertNotSentTo($t1Fan->user, LolMatchStartedNotification::class);
+});
+
+test('abandons stale matches before calling the api, even when it is down', function (): void {
+    $this->travelTo('2026-10-15 22:01:00');
+    createWorldsMatch();
+    Http::fake(['*' => Http::failedConnection()]);
+
+    expect(resolve(LolMatchWatcher::class)->tick())->toBeNull()
+        ->and(LolMatch::query()->findOrFail(LolEsportsResponses::MATCH_ID)->watch_ended_at)->not->toBeNull();
+});
+
+test('a failing push does not stop other users and is retried on the next tick', function (): void {
+    $this->travelTo('2026-10-15 17:45:00');
+    createWorldsMatch();
+    $broken = LolLeagueSubscription::factory()->create();
+    $healthy = LolLeagueSubscription::factory()->create();
+    LolEsportsResponses::fake();
+    // Subscriptions are processed in creation order: the first push (broken user) fails, the following ones succeed.
+    Notification::shouldReceive('send')->andReturnUsing(
+        fn (): never => throw new RuntimeException('push endpoint rejected'),
+        fn (): null => null,
+    );
+
+    $watcher = resolve(LolMatchWatcher::class);
+    expect($watcher->tick())->toBe(60)
+        ->and(LolMatchNotification::query()->where('user_id', $broken->user_id)->exists())->toBeFalse()
+        ->and(LolMatchNotification::query()->where('user_id', $healthy->user_id)->exists())->toBeTrue();
+
+    $watcher->tick();
+
+    expect(LolMatchNotification::query()->where('user_id', $broken->user_id)->exists())->toBeTrue();
 });

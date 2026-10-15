@@ -13,8 +13,10 @@ use App\Notifications\LolMatchReminderNotification;
 use App\Notifications\LolMatchStartedNotification;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Notifications\Notification;
+use Throwable;
 
-final readonly class LolMatchWatcher
+final class LolMatchWatcher
 {
     public const int WATCH_WINDOW_MINUTES = 90;
 
@@ -26,13 +28,18 @@ final readonly class LolMatchWatcher
 
     private const int LIVE_POLL_LEAD_SECONDS = 120;
 
-    public function __construct(private LolEsportsClient $client) {}
+    private bool $hadDeliveryFailure = false;
+
+    public function __construct(private readonly LolEsportsClient $client) {}
 
     /**
      * Run one watch iteration and return the seconds until the next one, or null to stop.
      */
     public function tick(): ?int
     {
+        $this->abandonStaleMatches();
+        $this->hadDeliveryFailure = false;
+
         $matches = $this->watchedMatches();
         if ($matches->isEmpty()) {
             return null;
@@ -72,7 +79,11 @@ final readonly class LolMatchWatcher
         }
 
         if ($nextDueAt === null) {
-            return null;
+            return $this->hadDeliveryFailure ? self::MIN_DELAY_SECONDS : null;
+        }
+
+        if ($this->hadDeliveryFailure) {
+            return self::MIN_DELAY_SECONDS;
         }
 
         $seconds = (int) now()->diffInSeconds($nextDueAt, absolute: false);
@@ -114,8 +125,8 @@ final readonly class LolMatchWatcher
                 continue;
             }
 
-            if ($secondsLeft >= 60 && LolMatchNotification::claim($match, $subscription->user, LolNotificationType::Reminder)) {
-                $subscription->user->notify(new LolMatchReminderNotification(
+            if ($secondsLeft >= 60) {
+                $this->sendOnce($match, $subscription, LolNotificationType::Reminder, new LolMatchReminderNotification(
                     $match,
                     $subscription,
                     (int) ceil($secondsLeft / 60),
@@ -129,10 +140,41 @@ final readonly class LolMatchWatcher
     private function notifyStarted(LolMatch $match): void
     {
         $match->subscriptions()->each(function (LolLeagueSubscription $subscription) use ($match): void {
-            if (LolMatchNotification::claim($match, $subscription->user, LolNotificationType::Started)) {
-                $subscription->user->notify(new LolMatchStartedNotification($match, $subscription));
-            }
+            $this->sendOnce($match, $subscription, LolNotificationType::Started, new LolMatchStartedNotification($match, $subscription));
         });
+    }
+
+    /**
+     * Claim then push; a failed push releases its claim so the next tick retries it, without blocking other users.
+     */
+    private function sendOnce(LolMatch $match, LolLeagueSubscription $subscription, LolNotificationType $type, Notification $notification): void
+    {
+        if (! LolMatchNotification::claim($match, $subscription->user, $type)) {
+            return;
+        }
+
+        try {
+            $subscription->user->notify($notification);
+        } catch (Throwable $throwable) {
+            report($throwable);
+            LolMatchNotification::query()
+                ->where('lol_match_id', $match->id)
+                ->where('user_id', $subscription->user_id)
+                ->where('type', $type->value)
+                ->delete();
+            $this->hadDeliveryFailure = true;
+        }
+    }
+
+    /**
+     * End matches past the abandon window up-front, so an API outage cannot keep the chain alive forever.
+     */
+    private function abandonStaleMatches(): void
+    {
+        LolMatch::query()
+            ->pending()
+            ->where('start_time', '<', now()->subHours(self::ABANDON_AFTER_HOURS))
+            ->update(['watch_ended_at' => now()]);
     }
 
     private function endWatch(LolMatch $match): void

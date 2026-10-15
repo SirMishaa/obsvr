@@ -12,6 +12,7 @@ use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 /**
  * Self re-dispatching watch loop. Unique *until processing* so the re-dispatch from handle() is accepted
@@ -35,6 +36,9 @@ final class LolTickJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
             $delay = $watcher->tick();
         } catch (ConnectionException|RequestException $exception) {
             Log::warning('LoL esports API unavailable, retrying tick', ['error' => $exception->getMessage()]);
+            $delay = self::RETRY_DELAY_SECONDS;
+        } catch (Throwable $exception) {
+            report($exception);
             $delay = self::RETRY_DELAY_SECONDS;
         }
 
