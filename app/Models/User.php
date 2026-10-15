@@ -38,6 +38,13 @@ final class User extends Authenticatable
     use Notifiable;
 
     /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'lol_reminder_minutes' => 20,
+    ];
+
+    /**
      * @return HasMany<FavouriteStreamer>
      */
     public function favouriteStreamers(): HasMany

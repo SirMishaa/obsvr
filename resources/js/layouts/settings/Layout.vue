@@ -4,6 +4,7 @@ import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { appearance } from '@/routes';
+import { edit as editLolSettings } from '@/routes/lol-settings';
 import { edit as editPassword } from '@/routes/password';
 import { edit as editProfile } from '@/routes/profile';
 import { edit as editSubscriptions } from '@/routes/subscriptions';
@@ -25,6 +26,10 @@ const sidebarNavItems: NavItem[] = [
     {
         title: 'Subscriptions',
         href: editSubscriptions.url(),
+    },
+    {
+        title: 'League of Legends',
+        href: editLolSettings.url(),
     },
 ];
 
