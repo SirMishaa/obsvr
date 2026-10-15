@@ -11,7 +11,7 @@
     "require": {
         "php": "^8.5.0",
         "ext-openssl": "*",
-        "aws/aws-sdk-php": "^3.401",
+        "aws/aws-sdk-php": "^3.401.2",
         "cweagans/composer-patches": "^2.0",
         "erag/laravel-lang-sync-inertia": "^2.4",
         "inertiajs/inertia-laravel": "^3.5.1",
@@ -19,7 +19,7 @@
         "laravel-notification-channels/webpush": "^12.1.0",
         "laravel/framework": "^13.36",
         "laravel/nightwatch": "^1.30.3",
-        "laravel/octane": "^2.22.0",
+        "laravel/octane": "2.19.1",
         "laravel/socialite": "^5.31.0",
         "laravel/telescope": "^5.26.0",
         "laravel/tinker": "^3.0.2",
