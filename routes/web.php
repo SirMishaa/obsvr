@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\LolController;
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\TwitchController;
@@ -32,6 +33,11 @@ Route::prefix('twitch')->group(function (): void {
     Route::get('favorite/{favouriteStreamer:streamer_id}', [TwitchController::class, 'getStreamerEvents'])
         ->name('twitch.streamer.events')
         ->middleware(['auth', 'verified']);
+});
+
+Route::prefix('lol')->middleware(['auth', 'verified'])->group(function (): void {
+    Route::get('/', [LolController::class, 'index'])->name('lol');
+    Route::post('leagues/{league}', [LolController::class, 'toggleLeague'])->name('lol.leagues.toggle');
 });
 
 Route::prefix('auth/{provider}')

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { Link } from '@inertiajs/vue3';
-import { BookOpen, Folder } from 'lucide-vue-next';
+import { BookOpen, Folder, Trophy } from 'lucide-vue-next';
 import NavFooter from '@/components/NavFooter.vue';
 import NavMain from '@/components/NavMain.vue';
 import NavUser from '@/components/NavUser.vue';
@@ -22,6 +22,11 @@ const mainNavItems: NavItem[] = [
         title: 'Twitch',
         href: '/twitch',
         icon: Folder,
+    },
+    {
+        title: 'League of Legends',
+        href: '/lol',
+        icon: Trophy,
     },
 ];
 
