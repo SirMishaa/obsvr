@@ -7,8 +7,10 @@ use App\Jobs\LolTickJob;
 use App\Jobs\SyncLolScheduleJob;
 use App\Models\LolLeagueSubscription;
 use App\Models\LolMatch;
+use App\Services\LolEsportsClient;
 use App\Services\LolMatchWatcher;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
 use Tests\Mocks\LolEsportsResponses;
@@ -19,7 +21,7 @@ test('sync fetches only subscribed leagues, stores matches and starts the tick',
     LolLeagueSubscription::factory()->create(['league' => LolLeague::Worlds]);
     Http::fake(['*/getSchedule*' => Http::response(LolEsportsResponses::schedule([LolEsportsResponses::scheduleEvent()]))]);
 
-    new SyncLolScheduleJob()->handle(resolve(App\Services\LolEsportsClient::class));
+    new SyncLolScheduleJob()->handle(resolve(LolEsportsClient::class));
 
     expect(LolMatch::query()->count())->toBe(1);
     Http::assertSentCount(1);
@@ -32,7 +34,7 @@ test('sync does not start the tick when no match is close', function (): void {
     LolLeagueSubscription::factory()->create();
     Http::fake(['*/getSchedule*' => Http::response(LolEsportsResponses::schedule([LolEsportsResponses::scheduleEvent()]))]);
 
-    new SyncLolScheduleJob()->handle(resolve(App\Services\LolEsportsClient::class));
+    new SyncLolScheduleJob()->handle(resolve(LolEsportsClient::class));
 
     Queue::assertNotPushed(LolTickJob::class);
 });
@@ -41,7 +43,7 @@ test('sync without subscriptions calls nothing', function (): void {
     Queue::fake();
     Http::fake();
 
-    $this->artisan('lol:sync-schedule')->assertSuccessful();
+    expect(Artisan::call('lol:sync-schedule'))->toBe(0);
 
     Http::assertNothingSent();
 });
@@ -79,6 +81,6 @@ test('tick survives api errors by retrying in 60 seconds', function (): void {
 });
 
 test('tick is unique until processing', function (): void {
-    expect(new LolTickJob())->toBeInstanceOf(ShouldBeUniqueUntilProcessing::class)
+    expect(class_implements(LolTickJob::class))->toHaveKey(ShouldBeUniqueUntilProcessing::class)
         ->and(new LolTickJob()->uniqueId())->toBe('lol-tick');
 });

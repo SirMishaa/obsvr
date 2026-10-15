@@ -38,7 +38,7 @@ final class LolEsportsResponses
 
     /**
      * @param  array<string, mixed>  $overrides
-     * @return array<string, mixed>
+     * @return array<mixed>
      */
     public static function scheduleEvent(array $overrides = []): array
     {
@@ -61,7 +61,7 @@ final class LolEsportsResponses
     }
 
     /**
-     * @param  list<array<string, mixed>>  $events
+     * @param  list<array<mixed>>  $events
      * @return array<string, mixed>
      */
     public static function schedule(array $events, ?string $newer = null): array

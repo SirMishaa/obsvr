@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Data\LolMatchData;
 use App\Enums\LolLeague;
 use App\Services\LolEsportsClient;
 use Illuminate\Http\Client\Request;
@@ -50,7 +51,7 @@ test('schedule follows the newer page until it covers the next day', function ()
 
     $matches = resolve(LolEsportsClient::class)->schedule(LolLeague::Worlds);
 
-    expect(array_map(fn ($match) => $match->id, $matches))->toBe(['1', '2']);
+    expect(array_map(fn (LolMatchData $match): string => $match->id, $matches))->toBe(['1', '2']);
     Http::assertSentCount(2);
 });
 

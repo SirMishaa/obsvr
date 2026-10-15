@@ -7,6 +7,7 @@ use App\Jobs\SyncLolScheduleJob;
 use App\Models\LolLeagueSubscription;
 use App\Models\User;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Testing\AssertableInertia;
 
 test('guests are redirected to login', function (): void {
     $this->get(route('lol'))->assertRedirect(route('login'));
@@ -19,7 +20,7 @@ test('page lists leagues with subscription state', function (): void {
     $this->actingAs($user)
         ->get(route('lol'))
         ->assertSuccessful()
-        ->assertInertia(fn ($page) => $page
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
             ->component('Lol')
             ->has('leagues', 5)
             ->where('leagues.0', [

@@ -68,7 +68,7 @@ final readonly class LolMatchWatcher
             }
 
             $dueAt = $this->sendDueReminders($match);
-            $nextDueAt = $nextDueAt === null ? $dueAt : $nextDueAt->min($dueAt);
+            $nextDueAt = $nextDueAt?->min($dueAt) ?? $dueAt;
         }
 
         if ($nextDueAt === null) {

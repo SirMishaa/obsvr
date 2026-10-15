@@ -32,7 +32,7 @@ final readonly class LolEsportsClient
                 ->json('data.schedule', []);
 
             foreach ($schedule['events'] ?? [] as $event) {
-                if (($event['type'] ?? null) === 'match' && isset($event['match']['id'])) {
+                if (($event['type'] ?? null) === 'match' && LolMatchData::matchId($event) !== null) {
                     $matches[] = LolMatchData::fromScheduleEvent($event, $league);
                 }
             }
@@ -58,8 +58,9 @@ final readonly class LolEsportsClient
 
         $ids = [];
         foreach ($events as $event) {
-            if (($event['state'] ?? null) === 'inProgress' && isset($event['match']['id'])) {
-                $ids[] = (string) $event['match']['id'];
+            $matchId = LolMatchData::matchId($event);
+            if (($event['state'] ?? null) === 'inProgress' && $matchId !== null) {
+                $ids[] = $matchId;
             }
         }
 
@@ -68,8 +69,8 @@ final readonly class LolEsportsClient
 
     private function request(): PendingRequest
     {
-        return Http::baseUrl((string) config('services.lolesports.base_url'))
-            ->withHeaders(['x-api-key' => (string) config('services.lolesports.api_key')])
+        return Http::baseUrl(config()->string('services.lolesports.base_url'))
+            ->withHeaders(['x-api-key' => config()->string('services.lolesports.api_key')])
             ->acceptJson()
             ->timeout(10)
             ->throw();

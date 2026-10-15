@@ -13,7 +13,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
+ * @property int $id
+ * @property int $user_id
+ * @property LolLeague $league
+ * @property LolSubscriptionMode $mode
  * @property list<string>|null $team_codes
+ * @property string|null $costream_channel
+ * @property-read User $user
  */
 #[Fillable([
     'user_id',

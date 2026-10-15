@@ -38,7 +38,7 @@ final class SyncLolScheduleJob implements ShouldQueue
             ->exists();
 
         if ($hasCloseMatch) {
-            LolTickJob::dispatch();
+            dispatch(new LolTickJob());
         }
     }
 }

@@ -7,6 +7,7 @@ use App\Enums\LolLeague;
 use App\Enums\LolNotificationType;
 use App\Models\LolLeagueSubscription;
 use App\Models\LolMatch;
+use App\Models\LolMatchNotification;
 use App\Models\User;
 use Tests\Mocks\LolEsportsResponses;
 
@@ -29,15 +30,15 @@ test('upsert from data keeps string ids and does not reset watch_ended_at', func
         ->and($match->teamCodes())->toBe(['C9', 'KC']);
 });
 
-test('subscription team filter', function (array $codes, bool $expected): void {
+test('subscription team filter', function (string $codes, bool $expected): void {
     $match = LolMatch::factory()->create();
-    $subscription = LolLeagueSubscription::factory()->teams($codes)->create();
+    $subscription = LolLeagueSubscription::factory()->teams(explode(',', $codes))->create();
 
     expect($subscription->matches($match))->toBe($expected);
 })->with([
-    'followed team plays' => [['KC'], true],
-    'no followed team' => [['T1', 'G2'], false],
-    'TBD never matches' => [['TBD'], false],
+    'followed team plays' => ['KC', true],
+    'no followed team' => ['T1,G2', false],
+    'TBD never matches' => ['TBD', false],
 ]);
 
 test('all mode matches every match of its league only', function (): void {
@@ -73,11 +74,11 @@ test('notification claim succeeds only once', function (): void {
     $match = LolMatch::factory()->create();
     $user = User::factory()->create();
 
-    expect(App\Models\LolMatchNotification::claim($match, $user, LolNotificationType::Reminder))->toBeTrue()
-        ->and(App\Models\LolMatchNotification::claim($match, $user, LolNotificationType::Reminder))->toBeFalse()
-        ->and(App\Models\LolMatchNotification::claim($match, $user, LolNotificationType::Started))->toBeTrue();
+    expect(LolMatchNotification::claim($match, $user, LolNotificationType::Reminder))->toBeTrue()
+        ->and(LolMatchNotification::claim($match, $user, LolNotificationType::Reminder))->toBeFalse()
+        ->and(LolMatchNotification::claim($match, $user, LolNotificationType::Started))->toBeTrue();
 });
 
 test('users get a 20 minutes reminder by default', function (): void {
-    expect(User::factory()->create()->fresh()->lol_reminder_minutes)->toBe(20);
+    expect(User::factory()->create()->refresh()->lol_reminder_minutes)->toBe(20);
 });

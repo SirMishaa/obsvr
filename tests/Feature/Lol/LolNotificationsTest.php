@@ -18,7 +18,8 @@ test('reminder push shows real minutes left, local start time and watch link', f
         ->and($message['body'])->toBe('Worlds · Play-Ins · BO5 · 20:00')
         ->and($message['icon'])->toBe('https://static.lolesports.com/leagues/1592594612171_WorldsDarkBG.png')
         ->and($message['data'])->toBe(['url' => 'https://twitch.tv/skyart'])
-        ->and($message['actions'][0])->toMatchArray(['title' => 'Watch on skyart', 'action' => 'https://twitch.tv/skyart']);
+        ->and($message)->toHaveKey('actions.0.title', 'Watch on skyart')
+        ->and($message)->toHaveKey('actions.0.action', 'https://twitch.tv/skyart');
 });
 
 test('started push links to lolesports without costream', function (): void {

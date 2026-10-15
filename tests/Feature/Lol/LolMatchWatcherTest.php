@@ -98,7 +98,7 @@ test('sends started notification once when live and ends the watch', function ()
 
     Notification::assertSentToTimes($subscription->user, LolMatchStartedNotification::class, 1);
     Notification::assertNotSentTo($subscription->user, LolMatchReminderNotification::class);
-    expect(LolMatch::query()->find(LolEsportsResponses::MATCH_ID)->watch_ended_at)->not->toBeNull();
+    expect(LolMatch::query()->findOrFail(LolEsportsResponses::MATCH_ID)->watch_ended_at)->not->toBeNull();
 });
 
 test('postponed match keeps polling and does not resend the reminder', function (): void {
@@ -140,8 +140,8 @@ test('abandons a match never seen live 4 hours after its start', function (): vo
     LolLeagueSubscription::factory()->create();
     LolEsportsResponses::fake();
 
-    expect(resolve(LolMatchWatcher::class)->tick())->toBeNull();
-    expect(LolMatch::query()->find(LolEsportsResponses::MATCH_ID)->watch_ended_at)->not->toBeNull();
+    expect(resolve(LolMatchWatcher::class)->tick())->toBeNull()
+        ->and(LolMatch::query()->findOrFail(LolEsportsResponses::MATCH_ID)->watch_ended_at)->not->toBeNull();
 });
 
 test('team mode subscriber is only notified for followed teams', function (): void {

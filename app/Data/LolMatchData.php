@@ -23,26 +23,42 @@ final readonly class LolMatchData
     ) {}
 
     /**
-     * @param  array<string, mixed>  $event
+     * @param  array<mixed>  $event
      */
     public static function fromScheduleEvent(array $event, LolLeague $league): self
     {
-        /** @var array{id: string, teams?: list<array<string, mixed>>, strategy?: array{count?: int}} $match */
-        $match = $event['match'];
+        $match = is_array($event['match'] ?? null) ? $event['match'] : [];
+        $strategy = is_array($match['strategy'] ?? null) ? $match['strategy'] : [];
+        $teams = is_array($match['teams'] ?? null) ? $match['teams'] : [];
+        $blockName = self::string($event['blockName'] ?? null);
+        $bestOf = $strategy['count'] ?? null;
 
         return new self(
-            id: (string) $match['id'],
+            id: (string) self::matchId($event),
             league: $league,
-            startTime: CarbonImmutable::parse((string) $event['startTime'])->utc(),
-            state: (string) $event['state'],
-            blockName: isset($event['blockName']) ? (string) $event['blockName'] : null,
-            bestOf: isset($match['strategy']['count']) ? (int) $match['strategy']['count'] : null,
-            teams: array_map(fn (array $team): array => [
-                'name' => (string) ($team['name'] ?? 'TBD'),
-                'code' => (string) ($team['code'] ?? 'TBD'),
-                'image' => (string) preg_replace('#^http://#', 'https://', (string) ($team['image'] ?? '')),
-            ], array_values($match['teams'] ?? [])),
+            startTime: CarbonImmutable::parse(self::string($event['startTime'] ?? null))->utc(),
+            state: self::string($event['state'] ?? null),
+            blockName: $blockName !== '' ? $blockName : null,
+            bestOf: is_int($bestOf) ? $bestOf : null,
+            teams: array_values(array_map(fn (mixed $team): array => [
+                'name' => self::string(is_array($team) ? $team['name'] ?? null : null, 'TBD'),
+                'code' => self::string(is_array($team) ? $team['code'] ?? null : null, 'TBD'),
+                'image' => (string) preg_replace('#^http://#', 'https://', self::string(is_array($team) ? $team['image'] ?? null : null)),
+            ], $teams)),
         );
+    }
+
+    /**
+     * The lolesports match id of a schedule/live event, or null when the event is not a match.
+     *
+     * @param  array<mixed>  $event
+     */
+    public static function matchId(array $event): ?string
+    {
+        $match = $event['match'] ?? null;
+        $id = is_array($match) ? $match['id'] ?? null : null;
+
+        return is_string($id) && $id !== '' ? $id : null;
     }
 
     /**
@@ -61,5 +77,10 @@ final readonly class LolMatchData
             'created_at' => now()->toDateTimeString(),
             'updated_at' => now()->toDateTimeString(),
         ];
+    }
+
+    private static function string(mixed $value, string $default = ''): string
+    {
+        return is_string($value) || is_int($value) ? (string) $value : $default;
     }
 }

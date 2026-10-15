@@ -15,7 +15,7 @@ final class SyncLolSchedule extends Command
 {
     public function handle(): void
     {
-        SyncLolScheduleJob::dispatchSync();
+        dispatch_sync(new SyncLolScheduleJob());
 
         $this->info('LoL schedule synced.');
     }

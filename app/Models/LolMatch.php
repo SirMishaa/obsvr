@@ -6,16 +6,25 @@ namespace App\Models;
 
 use App\Data\LolMatchData;
 use App\Enums\LolLeague;
+use Carbon\CarbonImmutable;
 use Database\Factories\LolMatchFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Scope;
+use Illuminate\Database\Eloquent\Attributes\WithoutIncrementing;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 /**
+ * @property string $id
+ * @property LolLeague $league
+ * @property CarbonImmutable $start_time
+ * @property string $state
+ * @property string|null $block_name
+ * @property int|null $best_of
  * @property list<array{name: string, code: string, image: string}> $teams
+ * @property CarbonImmutable|null $watch_ended_at
  */
 #[Fillable([
     'id',
@@ -27,12 +36,11 @@ use Illuminate\Database\Eloquent\Model;
     'teams',
     'watch_ended_at',
 ])]
+#[WithoutIncrementing]
 final class LolMatch extends Model
 {
     /** @use HasFactory<LolMatchFactory> */
     use HasFactory;
-
-    public $incrementing = false;
 
     protected $keyType = 'string';
 

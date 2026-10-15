@@ -5,11 +5,16 @@ declare(strict_types=1);
 namespace App\Models;
 
 use App\Enums\LolNotificationType;
+use Database\Factories\LolMatchNotificationFactory;
+use Illuminate\Database\Eloquent\Attributes\WithoutTimestamps;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+#[WithoutTimestamps]
 final class LolMatchNotification extends Model
 {
-    public $timestamps = false;
+    /** @use HasFactory<LolMatchNotificationFactory> */
+    use HasFactory;
 
     /**
      * Record the notification; returns false when it was already sent (at-least-once safe).

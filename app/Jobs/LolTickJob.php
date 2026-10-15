@@ -10,19 +10,19 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
+use Illuminate\Queue\Attributes\UniqueFor;
 use Illuminate\Support\Facades\Log;
 
 /**
  * Self re-dispatching watch loop. Unique *until processing* so the re-dispatch from handle() is accepted
  * while concurrent dispatches (hourly sync, new subscription) are absorbed when a tick is already pending.
  */
+#[UniqueFor(1200)]
 final class LolTickJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
 {
     use Queueable;
 
     private const int RETRY_DELAY_SECONDS = 60;
-
-    public int $uniqueFor = 1200;
 
     public function uniqueId(): string
     {
@@ -39,7 +39,7 @@ final class LolTickJob implements ShouldBeUniqueUntilProcessing, ShouldQueue
         }
 
         if ($delay !== null) {
-            self::dispatch()->delay($delay);
+            dispatch(new self())->delay($delay);
         }
     }
 }

@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Enums\LolLeague;
 use App\Jobs\SyncLolScheduleJob;
+use App\Models\LolLeagueSubscription;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
@@ -18,8 +19,8 @@ final class LolController extends Controller
         /** @var User $user */
         $user = auth()->user();
 
-        $subscribedLeagues = $user->lolLeagueSubscriptions()->pluck('league')
-            ->map(fn (LolLeague $league): string => $league->value)
+        $subscribedLeagues = $user->lolLeagueSubscriptions()->get()
+            ->map(fn (LolLeagueSubscription $subscription): string => $subscription->league->value)
             ->all();
 
         return Inertia::render('Lol', [
@@ -40,7 +41,7 @@ final class LolController extends Controller
         $subscription = $user->lolLeagueSubscriptions()->firstOrCreate(['league' => $league]);
 
         if ($subscription->wasRecentlyCreated) {
-            SyncLolScheduleJob::dispatch();
+            dispatch(new SyncLolScheduleJob());
         } else {
             $subscription->delete();
         }
