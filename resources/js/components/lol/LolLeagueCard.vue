@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { router, useForm } from '@inertiajs/vue3';
 import { Bell, BellOff } from 'lucide-vue-next';
+import { computed } from 'vue';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,6 +16,16 @@ const form = useForm({
     team_codes: [...props.league.teamCodes],
     costream_channel: props.league.costreamChannel ?? '',
 });
+
+/** Scheduled teams plus already selected ones that are no longer scheduled, so they stay deselectable. */
+const teamChips = computed(() => [
+    ...props.league.teams,
+    ...form.team_codes
+        .filter(
+            (code) => !props.league.teams.some((team) => team.code === code),
+        )
+        .map((code) => ({ code, name: code, image: '' })),
+]);
 
 const toggleFollow = () => {
     router.post(toggle.url(props.league.slug), {}, { preserveScroll: true });
@@ -79,17 +90,18 @@ const save = () => {
 
             <div v-if="form.mode === 'teams'" class="flex flex-col gap-2">
                 <p
-                    v-if="league.teams.length === 0"
+                    v-if="teamChips.length === 0"
                     class="text-sm text-muted-foreground"
                 >
                     Teams appear once the schedule is synced.
                 </p>
                 <div class="flex flex-wrap gap-2">
                     <button
-                        v-for="team in league.teams"
+                        v-for="team in teamChips"
                         :key="team.code"
                         type="button"
                         :title="team.name"
+                        :aria-pressed="form.team_codes.includes(team.code)"
                         class="flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors"
                         :class="
                             form.team_codes.includes(team.code)

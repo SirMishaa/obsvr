@@ -19,6 +19,8 @@ use Inertia\Response;
 
 final class LolController extends Controller
 {
+    private const int TEAM_CHIPS_LOOKBACK_DAYS = 60;
+
     public function toggleLeague(LolLeague $league): RedirectResponse
     {
         /** @var User $user */
@@ -56,7 +58,7 @@ final class LolController extends Controller
                     'mode' => ($subscription->mode ?? LolSubscriptionMode::All)->value,
                     'teamCodes' => $subscription->team_codes ?? [],
                     'costreamChannel' => $subscription?->costream_channel,
-                    'teams' => $this->teamsOf($league),
+                    'teams' => $subscription !== null ? $this->teamsOf($league) : [],
                 ];
             }, LolLeague::cases()),
             'upcomingMatches' => $this->upcomingMatches($subscriptions),
@@ -81,12 +83,16 @@ final class LolController extends Controller
     }
 
     /**
+     * Teams of the league's recent matches; the most recent name/logo wins when a team rebrands under the same code.
+     *
      * @return list<array{code: string, name: string, image: string}>
      */
     private function teamsOf(LolLeague $league): array
     {
         return array_values(LolMatch::query()
             ->where('league', $league)
+            ->where('start_time', '>=', now()->subDays(self::TEAM_CHIPS_LOOKBACK_DAYS))
+            ->orderByDesc('start_time')
             ->get()
             ->flatMap(fn (LolMatch $match): array => $match->teams)
             ->reject(fn (array $team): bool => $team['code'] === 'TBD')

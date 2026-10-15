@@ -50,3 +50,16 @@ it('shows followed league settings and upcoming matches', function (): void {
         ->assertSee('Co-streamer (Twitch)')
         ->assertSee('C9');
 });
+
+it('keeps a selected team that is no longer scheduled deselectable', function (): void {
+    $user = User::factory()->create();
+    LolLeagueSubscription::factory()->for($user)->teams(['OLD'])->create();
+    LolMatch::factory()->create();
+    $this->actingAs($user);
+
+    visit('/lol')
+        ->assertSee('OLD')
+        ->click('OLD')
+        ->click('Save')
+        ->assertSee('team codes field is required');
+});

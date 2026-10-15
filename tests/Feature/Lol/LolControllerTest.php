@@ -158,3 +158,27 @@ test('settings of a league that is not followed are not found', function (): voi
 
     expect($user->lolLeagueSubscriptions()->exists())->toBeFalse();
 });
+
+test('team chips come from recent matches of followed leagues only, latest name winning', function (): void {
+    $this->travelTo('2026-10-15 12:00:00');
+    $user = User::factory()->create();
+    LolLeagueSubscription::factory()->for($user)->create();
+    LolMatch::factory()->startingAt(now()->subDays(90))->create(['teams' => [
+        ['name' => 'Old Team', 'code' => 'OLD', 'image' => ''],
+        ['name' => 'Karmine Corp Old', 'code' => 'KC', 'image' => 'https://static.lolesports.com/teams/kc-old.png'],
+    ]]);
+    LolMatch::factory()->startingAt(now()->subDays(10))->create(['teams' => [
+        ['name' => 'Karmine Corp', 'code' => 'KC', 'image' => 'https://static.lolesports.com/teams/kc.png'],
+        ['name' => 'Cloud9', 'code' => 'C9', 'image' => 'https://static.lolesports.com/teams/c9.png'],
+    ]]);
+    LolMatch::factory()->create(['league' => LolLeague::Lck]);
+
+    $this->actingAs($user)
+        ->get(route('lol'))
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->where('leagues.0.teams', [
+                ['code' => 'C9', 'name' => 'Cloud9', 'image' => 'https://static.lolesports.com/teams/c9.png'],
+                ['code' => 'KC', 'name' => 'Karmine Corp', 'image' => 'https://static.lolesports.com/teams/kc.png'],
+            ])
+            ->where('leagues.3.teams', []));
+});
