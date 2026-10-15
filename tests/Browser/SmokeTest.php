@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Models\LolLeagueSubscription;
+use App\Models\LolMatch;
 use App\Models\User;
 
 it('renders guest pages without javascript errors', function (): void {
@@ -24,4 +26,27 @@ it('highlights the current settings section', function (): void {
         ->click('Profile')
         ->assertPathIs('/settings/profile')
         ->assertSee('Profile information');
+});
+
+it('renders the league of legends pages without javascript errors', function (): void {
+    $user = User::factory()->create();
+    LolLeagueSubscription::factory()->for($user)->teams(['KC'])->create();
+    LolMatch::factory()->create();
+    $this->actingAs($user);
+
+    visit(['/lol', '/settings/lol'])
+        ->assertNoJavaScriptErrors();
+});
+
+it('shows followed league settings and upcoming matches', function (): void {
+    $user = User::factory()->create();
+    LolLeagueSubscription::factory()->for($user)->teams(['KC'])->create();
+    LolMatch::factory()->create();
+    $this->actingAs($user);
+
+    visit('/lol')
+        ->assertSee('Upcoming matches')
+        ->assertSee('My teams')
+        ->assertSee('Co-streamer (Twitch)')
+        ->assertSee('C9');
 });
