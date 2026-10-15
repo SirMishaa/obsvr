@@ -53,4 +53,9 @@ return [
         'redirect' => env('KICK_REDIRECT_URI'),
     ],
 
+    'lolesports' => [
+        'base_url' => env('LOLESPORTS_BASE_URL', 'https://esports-api.lolesports.com/persisted/gw'),
+        'api_key' => env('LOLESPORTS_API_KEY', '0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z'),
+    ],
+
 ];
