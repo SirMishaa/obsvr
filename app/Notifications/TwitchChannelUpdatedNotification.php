@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Data\TwitchChannelUpdateMessageData;
@@ -8,18 +10,21 @@ use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 use Uri;
 
-class TwitchChannelUpdatedNotification extends Notification
+final class TwitchChannelUpdatedNotification extends Notification
 {
     public function __construct(
         public TwitchChannelUpdateMessageData $twitchChannelUpdateMessageData,
     ) {}
 
-    public function via($notifiable): array
+    /**
+     * @return array<int, class-string>
+     */
+    public function via(object $notifiable): array
     {
         return [WebPushChannel::class];
     }
 
-    public function toWebPush($notifiable, $notification): WebPushMessage
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
 
         $streamerName = $this->twitchChannelUpdateMessageData->broadcasterUserLogin;

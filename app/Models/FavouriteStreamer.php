@@ -1,10 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Enums\TwitchSubscriptionStatus;
 use App\Observers\UserFavouriteStreamerObserver;
 use Database\Factories\FavouriteStreamerFactory;
+use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\ObservedBy;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -15,21 +18,16 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @mixin IdeHelperFavouriteStreamer
  */
 #[ObservedBy(UserFavouriteStreamerObserver::class)]
-class FavouriteStreamer extends Model
+#[Fillable([
+    'user_id',
+    'streamer_id',
+    'streamer_name',
+    'subscription_status',
+])]
+final class FavouriteStreamer extends Model
 {
     /** @use HasFactory<FavouriteStreamerFactory> */
     use HasFactory;
-
-    protected $fillable = [
-        'user_id',
-        'streamer_id',
-        'streamer_name',
-        'subscription_status',
-    ];
-
-    protected $casts = [
-        'subscription_status' => TwitchSubscriptionStatus::class,
-    ];
 
     /**
      * @return BelongsTo<User, $this>
@@ -45,5 +43,12 @@ class FavouriteStreamer extends Model
     public function subscriptions(): HasMany
     {
         return $this->hasMany(Subscriptions::class);
+    }
+
+    protected function casts(): array
+    {
+        return [
+            'subscription_status' => TwitchSubscriptionStatus::class,
+        ];
     }
 }

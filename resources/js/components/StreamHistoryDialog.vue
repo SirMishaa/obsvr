@@ -1,10 +1,17 @@
 <script setup lang="ts">
-import { getStreamerEvents } from '@/actions/App/Http/Controllers/TwitchController';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import type { TwitchEvent } from '@/types';
 import { Temporal } from '@js-temporal/polyfill';
 import { History } from 'lucide-vue-next';
 import { computed, ref, watch } from 'vue';
+import { getStreamerEvents } from '@/actions/App/Http/Controllers/TwitchController';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import type { TwitchEvent } from '@/types';
 
 const props = defineProps<{
     streamerId: string;
@@ -35,13 +42,16 @@ watch(isOpen, async (newVal) => {
         if (!response.ok) throw new Error('Failed to load events');
         loadedEvents.value = await response.json();
     } catch (err) {
-        errors.value = err instanceof Error ? err.message : 'Une erreur est survenue';
+        errors.value =
+            err instanceof Error ? err.message : 'Une erreur est survenue';
     } finally {
         isLoading.value = false;
     }
 });
 
-const streamHistory = computed(() => (loadedEvents.value.length > 0 ? loadedEvents.value : []));
+const streamHistory = computed(() =>
+    loadedEvents.value.length > 0 ? loadedEvents.value : [],
+);
 
 /**
  * Formats a given date string into a relative or absolute date based on its proximity to the current time.
@@ -144,60 +154,97 @@ const getEventColor = (eventType: TwitchEvent['event_type']): string => {
         </DialogTrigger>
         <DialogContent class="max-h-[80vh] max-w-2xl overflow-hidden">
             <DialogHeader>
-                <DialogTitle class="text-xl font-bold">Historique de {{ streamerName }}</DialogTitle>
-                <DialogDescription> Derniers événements et streams </DialogDescription>
+                <DialogTitle class="text-xl font-bold"
+                    >Historique de {{ streamerName }}</DialogTitle
+                >
+                <DialogDescription>
+                    Derniers événements et streams
+                </DialogDescription>
             </DialogHeader>
 
             <div class="mt-4 max-h-[60vh] space-y-3 overflow-y-auto pr-2">
                 <!-- Loading skeleton -->
                 <div v-if="isLoading" class="space-y-3">
                     <div v-for="i in 5" :key="i" class="group relative">
-                        <div class="flex gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700">
-                            <div class="h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"></div>
+                        <div
+                            class="flex gap-3 rounded-lg border border-gray-200 p-3 dark:border-gray-700"
+                        >
+                            <div
+                                class="h-10 w-10 shrink-0 animate-pulse rounded-full bg-gray-200 dark:bg-gray-700"
+                            ></div>
                             <div class="flex-1 space-y-2">
-                                <div class="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
-                                <div class="h-3 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+                                <div
+                                    class="h-4 w-3/4 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                ></div>
+                                <div
+                                    class="h-3 w-1/2 animate-pulse rounded bg-gray-200 dark:bg-gray-700"
+                                ></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Empty state -->
-                <div v-else-if="streamHistory.length === 0" class="py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                <div
+                    v-else-if="streamHistory.length === 0"
+                    class="py-8 text-center text-sm text-gray-500 dark:text-gray-400"
+                >
                     Aucun événement enregistré pour ce streamer
                 </div>
 
                 <!-- Error state -->
-                <div v-else-if="errors" class="py-8 text-center text-sm text-red-500">
+                <div
+                    v-else-if="errors"
+                    class="py-8 text-center text-sm text-red-500"
+                >
                     {{ errors }}
                 </div>
 
                 <!-- Events list -->
-                <div v-else v-for="event in streamHistory" :key="event.id" class="group relative">
+                <div
+                    v-else
+                    v-for="event in streamHistory"
+                    :key="event.id"
+                    class="group relative"
+                >
                     <div
                         class="flex gap-3 rounded-lg border p-3 transition-all hover:shadow-md dark:hover:bg-white/5"
                         :class="getEventColor(event.event_type)"
                     >
-                        <div class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/50 text-xl dark:bg-black/20">
+                        <div
+                            class="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/50 text-xl dark:bg-black/20"
+                        >
                             {{ getEventIcon(event.event_type) }}
                         </div>
 
                         <div class="flex-1 space-y-1">
                             <div class="flex items-start justify-between gap-2">
-                                <p class="font-medium text-gray-900 dark:text-white">
+                                <p
+                                    class="font-medium text-gray-900 dark:text-white"
+                                >
                                     {{ getEventLabel(event) }}
                                 </p>
-                                <time class="shrink-0 text-xs text-gray-500 dark:text-gray-400">
+                                <time
+                                    class="shrink-0 text-xs text-gray-500 dark:text-gray-400"
+                                >
                                     {{ formatEventDate(event.occurred_at) }}
                                 </time>
                             </div>
 
-                            <p v-if="getEventDescription(event)" class="text-sm text-gray-600 dark:text-gray-300">
+                            <p
+                                v-if="getEventDescription(event)"
+                                class="text-sm text-gray-600 dark:text-gray-300"
+                            >
                                 {{ getEventDescription(event) }}
                             </p>
 
-                            <div v-if="event.payload.category_name" class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-                                <span class="rounded-full bg-purple-500/10 px-2 py-0.5 font-medium text-purple-700 dark:text-purple-300">
+                            <div
+                                v-if="event.payload.category_name"
+                                class="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400"
+                            >
+                                <span
+                                    class="rounded-full bg-purple-500/10 px-2 py-0.5 font-medium text-purple-700 dark:text-purple-300"
+                                >
                                     {{ event.payload.category_name }}
                                 </span>
                             </div>

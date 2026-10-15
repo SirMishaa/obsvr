@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
     'stream_started' => 'Streamer :name started a stream',
     'stream_channel_updated' => 'Streamer :name updated the stream',

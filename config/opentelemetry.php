@@ -1,10 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 use Illuminate\Support\Str;
-use Keepsuit\LaravelOpenTelemetry\Instrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\CacheInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\ConsoleInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\EventInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\HttpClientInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\HttpServerInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\LivewireInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\QueryInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\QueueInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\RedisInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\ScoutInstrumentation;
+use Keepsuit\LaravelOpenTelemetry\Instrumentation\ViewInstrumentation;
 use Keepsuit\LaravelOpenTelemetry\Support\ResourceAttributesParser;
-use Keepsuit\LaravelOpenTelemetry\TailSampling;
-use Keepsuit\LaravelOpenTelemetry\WorkerMode;
+use Keepsuit\LaravelOpenTelemetry\TailSampling\Rules\ErrorsRule;
+use Keepsuit\LaravelOpenTelemetry\TailSampling\Rules\SlowTraceRule;
+use Keepsuit\LaravelOpenTelemetry\WorkerMode\Detectors\OctaneWorkerModeDetector;
+use Keepsuit\LaravelOpenTelemetry\WorkerMode\Detectors\QueueWorkerModeDetector;
 use OpenTelemetry\SDK\Common\Configuration\Variables;
 
 return [
@@ -94,8 +108,8 @@ return [
                 'decision_wait' => (int) env('OTEL_TRACES_TAIL_SAMPLING_DECISION_WAIT', 5000),
 
                 'rules' => [
-                    TailSampling\Rules\ErrorsRule::class => filter_var(env('OTEL_TRACES_TAIL_SAMPLING_RULE_KEEP_ERRORS', true), FILTER_VALIDATE_BOOLEAN),
-                    TailSampling\Rules\SlowTraceRule::class => [
+                    ErrorsRule::class => filter_var(env('OTEL_TRACES_TAIL_SAMPLING_RULE_KEEP_ERRORS', true), FILTER_VALIDATE_BOOLEAN),
+                    SlowTraceRule::class => [
                         'enabled' => filter_var(env('OTEL_TRACES_TAIL_SAMPLING_RULE_SLOW_TRACES', true), FILTER_VALIDATE_BOOLEAN),
                         'threshold_ms' => (int) env('OTEL_TRACES_TAIL_SAMPLING_SLOW_TRACES_THRESHOLD_MS', 2000),
                     ],
@@ -200,7 +214,7 @@ return [
      * List of instrumentation used for application tracing
      */
     'instrumentation' => [
-        Instrumentation\HttpServerInstrumentation::class => [
+        HttpServerInstrumentation::class => [
             'enabled' => filter_var(env('OTEL_INSTRUMENTATION_HTTP_SERVER', true), FILTER_VALIDATE_BOOLEAN),
             'excluded_paths' => [],
             'excluded_methods' => [],
@@ -209,7 +223,7 @@ return [
             'sensitive_query_parameters' => [],
         ],
 
-        Instrumentation\HttpClientInstrumentation::class => [
+        HttpClientInstrumentation::class => [
             'enabled' => filter_var(env('OTEL_INSTRUMENTATION_HTTP_CLIENT', true), FILTER_VALIDATE_BOOLEAN),
             'manual' => false, // When set to true, you need to call `withTrace()` on the request to enable tracing
             'allowed_headers' => [],
@@ -217,29 +231,29 @@ return [
             'sensitive_query_parameters' => [],
         ],
 
-        Instrumentation\QueryInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_QUERY', true), FILTER_VALIDATE_BOOLEAN),
+        QueryInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_QUERY', true), FILTER_VALIDATE_BOOLEAN),
 
-        Instrumentation\RedisInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_REDIS', true), FILTER_VALIDATE_BOOLEAN),
+        RedisInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_REDIS', true), FILTER_VALIDATE_BOOLEAN),
 
-        Instrumentation\QueueInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_QUEUE', true), FILTER_VALIDATE_BOOLEAN),
+        QueueInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_QUEUE', true), FILTER_VALIDATE_BOOLEAN),
 
-        Instrumentation\CacheInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_CACHE', true), FILTER_VALIDATE_BOOLEAN),
+        CacheInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_CACHE', true), FILTER_VALIDATE_BOOLEAN),
 
-        Instrumentation\EventInstrumentation::class => [
+        EventInstrumentation::class => [
             'enabled' => filter_var(env('OTEL_INSTRUMENTATION_EVENT', true), FILTER_VALIDATE_BOOLEAN),
             'excluded' => [],
         ],
 
-        Instrumentation\ViewInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_VIEW', true), FILTER_VALIDATE_BOOLEAN),
+        ViewInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_VIEW', true), FILTER_VALIDATE_BOOLEAN),
 
-        Instrumentation\LivewireInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_LIVEWIRE', true), FILTER_VALIDATE_BOOLEAN),
+        LivewireInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_LIVEWIRE', true), FILTER_VALIDATE_BOOLEAN),
 
-        Instrumentation\ConsoleInstrumentation::class => [
+        ConsoleInstrumentation::class => [
             'enabled' => filter_var(env('OTEL_INSTRUMENTATION_CONSOLE', true), FILTER_VALIDATE_BOOLEAN),
             'commands' => [],
         ],
 
-        Instrumentation\ScoutInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_SCOUT', true), FILTER_VALIDATE_BOOLEAN),
+        ScoutInstrumentation::class => filter_var(env('OTEL_INSTRUMENTATION_SCOUT', true), FILTER_VALIDATE_BOOLEAN),
     ],
 
     /**
@@ -274,8 +288,8 @@ return [
          * - QueueDetector: Detects Laravel default queue worker and Laravel Horizon
          */
         'detectors' => [
-            WorkerMode\Detectors\OctaneWorkerModeDetector::class,
-            WorkerMode\Detectors\QueueWorkerModeDetector::class,
+            OctaneWorkerModeDetector::class,
+            QueueWorkerModeDetector::class,
         ],
     ],
 ];

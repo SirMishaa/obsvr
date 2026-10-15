@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Fixtures;
 
-class TwitchFixtures
+final class TwitchFixtures
 {
     /**
      * List of popular French Twitch streamers with their real IDs and logins

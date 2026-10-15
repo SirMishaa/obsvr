@@ -2,7 +2,7 @@ self.addEventListener('push', (event) => {
     let data = {};
     try {
         data = event.data ? event.data.json() : {};
-    } catch (e) {}
+    } catch {}
 
     const title = data.title || 'Notification';
     const options = {

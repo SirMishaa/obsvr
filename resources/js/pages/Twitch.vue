@@ -1,19 +1,23 @@
 <script setup lang="ts">
+import { Head, router } from '@inertiajs/vue3';
+import { Clock, Eye, Star } from 'lucide-vue-next';
+import { computed, onMounted, ref } from 'vue';
 import ScheduledStreamCard from '@/components/ScheduledStreamCard.vue';
 import StreamHistoryDialog from '@/components/StreamHistoryDialog.vue';
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
+import { subscription } from '@/routes/push';
+import { favorite } from '@/routes/twitch';
 import { type BreadcrumbItem, ScheduledStream } from '@/types';
 import { levenshteinDistance, urlBase64ToUint8Array } from '@/utils';
-import { Head, router } from '@inertiajs/vue3';
-import { Clock, Eye, Star } from 'lucide-vue-next';
-import { computed, onMounted, ref } from 'vue';
 
 interface FollowedStreamer {
     broadcasterId: string;
     broadcasterLogin: string;
     broadcasterName: string;
     followedAt: string;
+    isLive?: boolean;
+    game?: string;
 }
 
 /**
@@ -87,7 +91,10 @@ const statusOfFollowedStreamersComp = computed(() => {
                 .replace(/[_-]/g, ' ')
                 .toLowerCase();
 
-            return streamerName.includes(searchTerm) || levenshteinDistance(streamerName, searchTerm) <= 2;
+            return (
+                streamerName.includes(searchTerm) ||
+                levenshteinDistance(streamerName, searchTerm) <= 2
+            );
         });
     return props.statusOfFollowedStreamers;
 });
@@ -111,14 +118,24 @@ onMounted(() => {
             countdown.value = 120;
             cacheBust.value = String(Date.now());
             router.reload({
-                only: ['statusOfFollowedStreamers', 'favoriteStreamers', 'subscriptions'],
+                only: [
+                    'statusOfFollowedStreamers',
+                    'favoriteStreamers',
+                    'subscriptions',
+                ],
             });
         }
     }, 1000);
 });
 
-const formatTwitchThumbnailUrl = (url: string, width: number, height: number): URL => {
-    const fullUrl = url.replace('{width}', width.toString()).replace('{height}', height.toString());
+const formatTwitchThumbnailUrl = (
+    url: string,
+    width: number,
+    height: number,
+): URL => {
+    const fullUrl = url
+        .replace('{width}', width.toString())
+        .replace('{height}', height.toString());
     const formattedUrl = new URL(fullUrl);
 
     /** Add cache busting query parameter to avoid image caching */
@@ -132,8 +149,13 @@ const redirectToTwitch = (username: string) => {
 };
 
 const formatRelativeDate = (startedAt: string) => {
-    return new Intl.RelativeTimeFormat('fr', { numeric: 'auto', style: 'short' }).format(
-        -Math.floor((new Date().getTime() - new Date(startedAt).getTime()) / 60000),
+    return new Intl.RelativeTimeFormat('fr', {
+        numeric: 'auto',
+        style: 'short',
+    }).format(
+        -Math.floor(
+            (new Date().getTime() - new Date(startedAt).getTime()) / 60000,
+        ),
         'minute',
     );
 };
@@ -155,7 +177,7 @@ const enableWebPush = async () => {
     });
 
     router.post(
-        route('push.subscription'),
+        subscription.url(),
         {
             ...sub.toJSON(),
         },
@@ -170,10 +192,16 @@ const enableWebPush = async () => {
     );
 };
 
-const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { streamerId: string; streamerName: string }) => {
+const toggleFavoriteStreamerRework = async ({
+    streamerId,
+    streamerName,
+}: {
+    streamerId: string;
+    streamerName: string;
+}) => {
     try {
         router.post(
-            route('twitch.favorite', streamerId),
+            favorite.url(streamerId),
             {
                 streamerName,
             },
@@ -181,9 +209,13 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                 preserveScroll: true,
                 preserveState: true,
                 replace: true,
-                onError: (errors) => console.error('Toggle favorite failed', errors),
+                onError: (errors) =>
+                    console.error('Toggle favorite failed', errors),
                 onFinish: () => {
-                    console.log('Toggling favorite streamer for userId %s', streamerId);
+                    console.log(
+                        'Toggling favorite streamer for userId %s',
+                        streamerId,
+                    );
                     /*favoriteStreamersComp.value.includes(streamerId)
                         ? favoriteStreamersComp.value.splice(favoriteStreamersComp.value.indexOf(streamerId), 1)
                         : favoriteStreamersComp.value.push(streamerId);*/
@@ -213,18 +245,31 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
         </div>-->
 
         <!-- Scheduled Streams Section -->
-        <div v-if="props.scheduledStreams && props.scheduledStreams.length > 0" class="mt-6">
+        <div
+            v-if="props.scheduledStreams && props.scheduledStreams.length > 0"
+            class="mt-6"
+        >
             <div class="mb-4 px-4">
-                <h1 class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white">Prochains streams planifiés</h1>
-                <p class="text-sm text-gray-600 dark:text-gray-400">Streams à venir de vos streamers favoris</p>
+                <h1
+                    class="text-2xl font-bold tracking-tight text-gray-900 dark:text-white"
+                >
+                    Prochains streams planifiés
+                </h1>
+                <p class="text-sm text-gray-600 dark:text-gray-400">
+                    Streams à venir de vos streamers favoris
+                </p>
             </div>
 
-            <section class="grid grid-cols-1 gap-x-4 gap-y-6 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8">
+            <section
+                class="grid grid-cols-1 gap-x-4 gap-y-6 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8"
+            >
                 <ScheduledStreamCard
                     v-for="schedule in props.scheduledStreams"
                     :key="schedule.broadcasterId"
                     :schedule="schedule"
-                    :is-favorite="props.favoriteStreamers.includes(schedule.broadcasterId)"
+                    :is-favorite="
+                        props.favoriteStreamers.includes(schedule.broadcasterId)
+                    "
                     @click="() => redirectToTwitch(schedule.broadcasterLogin)"
                 />
             </section>
@@ -232,11 +277,29 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
 
         <div class="mt-6 flex items-center justify-between px-4">
             <div>
-                <h1 class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis en live</h1>
-                <h2 class="text-base tracking-tight text-gray-900 dark:text-white">Actualisation dans {{ countdown }} secondes</h2>
-                <button @click="enableWebPush" class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white">Activer notification</button>
+                <h1
+                    class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
+                >
+                    Mes suivis en live
+                </h1>
+                <h2
+                    class="text-base tracking-tight text-gray-900 dark:text-white"
+                >
+                    Actualisation dans {{ countdown }} secondes
+                </h2>
+                <button
+                    @click="enableWebPush"
+                    class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white"
+                >
+                    Activer notification
+                </button>
             </div>
-            <input type="text" placeholder="Rechercher un streamer" class="border-b-2 border-gray-400 focus:outline-none" v-model="inputSearch" />
+            <input
+                type="text"
+                placeholder="Rechercher un streamer"
+                class="border-b-2 border-gray-400 focus:outline-none"
+                v-model="inputSearch"
+            />
         </div>
         <div>
             <section
@@ -248,42 +311,65 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                     @click.exact="() => redirectToTwitch(streamer.userName)"
                     class="group flex cursor-pointer flex-col overflow-hidden rounded-lg bg-white shadow-md transition-all hover:scale-105 dark:bg-[#121212]"
                     :class="{
-                        'favorite-border': props.favoriteStreamers.includes(streamer.userId),
+                        'favorite-border': props.favoriteStreamers.includes(
+                            streamer.userId,
+                        ),
                     }"
                 >
                     <div class="relative h-32">
                         <img
                             :src="
                                 streamer.thumbnailUrl
-                                    ? formatTwitchThumbnailUrl(streamer.thumbnailUrl, 480, 270).toString()
+                                    ? formatTwitchThumbnailUrl(
+                                          streamer.thumbnailUrl,
+                                          480,
+                                          270,
+                                      ).toString()
                                     : 'http://placebeard.it/640/480'
                             "
                             :alt="streamer.userName"
                             class="h-full w-full object-cover"
                         />
-                        <div class="absolute top-0 h-28 w-full object-cover"></div>
+                        <div
+                            class="absolute top-0 h-28 w-full object-cover"
+                        ></div>
                         <div
                             v-if="streamer.type === 'live'"
                             class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
                         >
-                            <div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
+                            <div
+                                class="h-2 w-2 animate-pulse rounded-full bg-white"
+                            ></div>
                             LIVE
                         </div>
                         <div
-                            v-if="props.subscriptions?.some((sub) => sub.condition.broadcaster_user_id === streamer.userId)"
+                            v-if="
+                                props.subscriptions?.some(
+                                    (sub) =>
+                                        sub.condition.broadcaster_user_id ===
+                                        streamer.userId,
+                                )
+                            "
                             class="absolute top-2 left-2 flex items-center gap-1 rounded-full px-2 py-1 text-xs text-white"
                             :class="{
                                 'bg-green-500': props.subscriptions?.some(
-                                    (sub) => sub.condition.broadcaster_user_id === streamer.userId && sub.status === 'enabled',
+                                    (sub) =>
+                                        sub.condition.broadcaster_user_id ===
+                                            streamer.userId &&
+                                        sub.status === 'enabled',
                                 ),
                                 'bg-orange-500': props.subscriptions?.some(
                                     (sub) =>
-                                        sub.condition.broadcaster_user_id === streamer.userId &&
-                                        sub.status === 'webhook_callback_verification_failed',
+                                        sub.condition.broadcaster_user_id ===
+                                            streamer.userId &&
+                                        sub.status ===
+                                            'webhook_callback_verification_failed',
                                 ),
                             }"
                         >
-                            <div class="h-2 w-2 animate-pulse rounded-full bg-white text-xs"></div>
+                            <div
+                                class="h-2 w-2 animate-pulse rounded-full bg-white text-xs"
+                            ></div>
                             RealTime
                         </div>
                         <button
@@ -298,37 +384,60 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                             <Star
                                 :size="16"
                                 :class="
-                                    props.favoriteStreamers.includes(streamer.userId)
+                                    props.favoriteStreamers.includes(
+                                        streamer.userId,
+                                    )
                                         ? 'text-yellow-400'
                                         : 'text-white'
                                 "
-                                :fill="props.favoriteStreamers.includes(streamer.userId) ? 'currentColor' : 'none'"
+                                :fill="
+                                    props.favoriteStreamers.includes(
+                                        streamer.userId,
+                                    )
+                                        ? 'currentColor'
+                                        : 'none'
+                                "
                             />
                         </button>
                         <StreamHistoryDialog
-                            v-if="props.favoriteStreamers.includes(streamer.userId)"
+                            v-if="
+                                props.favoriteStreamers.includes(
+                                    streamer.userId,
+                                )
+                            "
                             :streamer-id="streamer.userId"
                             :streamer-name="streamer.userName"
                         />
                     </div>
                     <div class="px-4 py-6">
-                        <h3 class="text-base font-bold">{{ streamer.userName }}</h3>
+                        <h3 class="text-base font-bold">
+                            {{ streamer.userName }}
+                        </h3>
                         <div v-if="streamer.title" class="mt-1 overflow-hidden">
-                            <p class="stream-title text-sm text-gray-700 dark:text-gray-300">
+                            <p
+                                class="stream-title text-sm text-gray-700 dark:text-gray-300"
+                            >
                                 {{ streamer.title }}
                             </p>
                         </div>
-                        <div v-if="streamer.type === 'live'" class="mt-2 text-xs font-semibold text-gray-400 dark:text-gray-200">
+                        <div
+                            v-if="streamer.type === 'live'"
+                            class="mt-2 text-xs font-semibold text-gray-400 dark:text-gray-200"
+                        >
                             <p>{{ streamer.gameName }}</p>
                         </div>
-                        <div class="mt-2 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                        <div
+                            class="mt-2 flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400"
+                        >
                             <div class="flex items-center gap-1">
                                 <Eye :size="14" />
                                 <span>{{ streamer.viewerCount }}</span>
                             </div>
                             <div class="flex items-center gap-1">
                                 <Clock :size="14" />
-                                <span>{{ formatRelativeDate(streamer.startedAt) }}</span>
+                                <span>{{
+                                    formatRelativeDate(streamer.startedAt)
+                                }}</span>
                             </div>
                         </div>
                     </div>
@@ -336,8 +445,14 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
             </section>
         </div>
         <template v-if="false">
-            <h1 class="mt-6 mb-2 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Mes suivis</h1>
-            <section class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8">
+            <h1
+                class="mt-6 mb-2 px-4 text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
+            >
+                Mes suivis
+            </h1>
+            <section
+                class="grid grid-cols-1 gap-4 p-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
+            >
                 <div
                     v-for="streamer in props.followedStreamers"
                     :key="streamer.broadcasterId"
@@ -349,22 +464,33 @@ const toggleFavoriteStreamerRework = async ({ streamerId, streamerName }: { stre
                             :alt="streamer.broadcasterName"
                             class="h-full w-full object-cover"
                         />-->
-                        <div class="absolute top-0 h-28 w-full bg-black object-cover"></div>
+                        <div
+                            class="absolute top-0 h-28 w-full bg-black object-cover"
+                        ></div>
                         <div
                             v-if="streamer.isLive"
                             class="absolute top-2 right-2 flex items-center gap-1 rounded-full bg-red-500 px-2 py-1 text-xs text-white"
                         >
-                            <div class="h-2 w-2 animate-pulse rounded-full bg-white"></div>
+                            <div
+                                class="h-2 w-2 animate-pulse rounded-full bg-white"
+                            ></div>
                             LIVE
                         </div>
                     </div>
                     <div class="p-4">
-                        <h3 class="text-sm font-semibold">{{ streamer.broadcasterName }}</h3>
-                        <div v-if="streamer.isLive" class="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                        <h3 class="text-sm font-semibold">
+                            {{ streamer.broadcasterName }}
+                        </h3>
+                        <div
+                            v-if="streamer.isLive"
+                            class="mt-2 text-sm text-gray-600 dark:text-gray-300"
+                        >
                             <p>Playing {{ streamer.game }}</p>
                             <p>- viewers</p>
                         </div>
-                        <div v-else class="mt-2 text-xs text-gray-500">Offline</div>
+                        <div v-else class="mt-2 text-xs text-gray-500">
+                            Offline
+                        </div>
                     </div>
                 </div>
             </section>

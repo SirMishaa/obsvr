@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use Illuminate\Notifications\Notification;
@@ -7,18 +9,21 @@ use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 use Uri;
 
-class TwitchStreamerStreamStartedNotification extends Notification
+final class TwitchStreamerStreamStartedNotification extends Notification
 {
     public function __construct(
         public string $streamerName,
     ) {}
 
-    public function via($notifiable): array
+    /**
+     * @return array<int, class-string>
+     */
+    public function via(object $notifiable): array
     {
         return [WebPushChannel::class];
     }
 
-    public function toWebPush($notifiable, $notification): WebPushMessage
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
 
         $url = Uri::of('https://twitch.tv')

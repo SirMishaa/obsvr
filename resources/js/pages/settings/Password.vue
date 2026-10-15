@@ -1,14 +1,14 @@
 <script setup lang="ts">
-import InputError from '@/components/InputError.vue';
-import AppLayout from '@/layouts/AppLayout.vue';
-import SettingsLayout from '@/layouts/settings/Layout.vue';
 import { Head, useForm } from '@inertiajs/vue3';
 import { ref } from 'vue';
-
 import HeadingSmall from '@/components/HeadingSmall.vue';
+import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { update } from '@/routes/password';
 import { type BreadcrumbItem } from '@/types';
 
 const breadcrumbItems: BreadcrumbItem[] = [
@@ -28,7 +28,7 @@ const form = useForm({
 });
 
 const updatePassword = () => {
-    form.put(route('password.update'), {
+    form.submit(update(), {
         preserveScroll: true,
         onSuccess: () => form.reset(),
         onError: (errors: any) => {
@@ -56,7 +56,10 @@ const updatePassword = () => {
 
         <SettingsLayout>
             <div class="space-y-6">
-                <HeadingSmall title="Update password" description="Ensure your account is using a long, random password to stay secure" />
+                <HeadingSmall
+                    title="Update password"
+                    description="Ensure your account is using a long, random password to stay secure"
+                />
 
                 <form @submit.prevent="updatePassword" class="space-y-6">
                     <div class="grid gap-2">
@@ -88,7 +91,9 @@ const updatePassword = () => {
                     </div>
 
                     <div class="grid gap-2">
-                        <Label for="password_confirmation">Confirm password</Label>
+                        <Label for="password_confirmation"
+                            >Confirm password</Label
+                        >
                         <Input
                             id="password_confirmation"
                             v-model="form.password_confirmation"
@@ -97,11 +102,15 @@ const updatePassword = () => {
                             autocomplete="new-password"
                             placeholder="Confirm password"
                         />
-                        <InputError :message="form.errors.password_confirmation" />
+                        <InputError
+                            :message="form.errors.password_confirmation"
+                        />
                     </div>
 
                     <div class="flex items-center gap-4">
-                        <Button :disabled="form.processing">Save password</Button>
+                        <Button :disabled="form.processing"
+                            >Save password</Button
+                        >
 
                         <Transition
                             enter-active-class="transition ease-in-out"
@@ -109,7 +118,12 @@ const updatePassword = () => {
                             leave-active-class="transition ease-in-out"
                             leave-to-class="opacity-0"
                         >
-                            <p v-show="form.recentlySuccessful" class="text-sm text-neutral-600">Saved.</p>
+                            <p
+                                v-show="form.recentlySuccessful"
+                                class="text-sm text-neutral-600"
+                            >
+                                Saved.
+                            </p>
                         </Transition>
                     </div>
                 </form>

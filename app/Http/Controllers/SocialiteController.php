@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Enums\AuthProvider;
@@ -14,10 +16,11 @@ use JetBrains\PhpStorm\ArrayShape;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\AbstractProvider;
 use Laravel\Socialite\Two\InvalidStateException;
+use Symfony\Component\HttpFoundation\RedirectResponse as SymfonyRedirectResponse;
 
-class SocialiteController extends Controller
+final class SocialiteController extends Controller
 {
-    const array scopes = [
+    public const array scopes = [
         'user:read:email',
         'user:read:follows',
     ];
@@ -44,7 +47,7 @@ class SocialiteController extends Controller
      * @throws ValidationException If the provider validation fails.
      * @throws InvalidStateException If the state of the social authentication is invalid.
      */
-    public function handleCallback(string $provider)
+    public function handleCallback(string $provider): SymfonyRedirectResponse
     {
         try {
 
@@ -66,7 +69,7 @@ class SocialiteController extends Controller
         } catch (InvalidStateException|ValidationException $invalidStateException) {
             return to_route('login')
                 ->withErrors([
-                    'provider' => 'Something went wrong: ' . $invalidStateException,
+                    'provider' => 'Something went wrong: '.$invalidStateException,
                 ]);
         }
 

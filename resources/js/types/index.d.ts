@@ -1,5 +1,4 @@
 import type { LucideIcon } from 'lucide-vue-next';
-import type { Config } from 'ziggy-js';
 
 export interface Auth {
     user: User;
@@ -17,11 +16,12 @@ export interface NavItem {
     isActive?: boolean;
 }
 
-export type AppPageProps<T extends Record<string, unknown> = Record<string, unknown>> = T & {
+export type AppPageProps<
+    T extends Record<string, unknown> = Record<string, unknown>,
+> = T & {
     name: string;
     quote: { message: string; author: string };
     auth: Auth;
-    ziggy: Config & { location: string };
     sidebarOpen: boolean;
     /** Todo: Remove me if possible, needed for now because of StreamHistoryDialog, otherwise it does not allow to mutate props.events */
     streamerEvents: Array<TwitchEvent>;
@@ -48,7 +48,11 @@ export interface FavouriteStreamer {
     streamer_name: string;
     created_at: string;
     updated_at: string;
-    subscription_status: 'subscribed' | 'unsubscribed' | 'webhook_callback_verification_pending' | 'enabled';
+    subscription_status:
+        | 'subscribed'
+        | 'unsubscribed'
+        | 'webhook_callback_verification_pending'
+        | 'enabled';
     subscriptions: Array<Subscription>;
 }
 
@@ -56,7 +60,11 @@ export interface Subscription {
     id: number;
     favourite_streamer_id: number;
     type: 'stream.online' | 'stream.offline' | 'channel.update';
-    status: 'subscribed' | 'unsubscribed' | 'webhook_callback_verification_pending' | 'enabled';
+    status:
+        | 'subscribed'
+        | 'unsubscribed'
+        | 'webhook_callback_verification_pending'
+        | 'enabled';
     batch_delay: number | null;
     created_at: string;
     updated_at: string;

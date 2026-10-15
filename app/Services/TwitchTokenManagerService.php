@@ -1,22 +1,24 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Carbon;
 use App\Models\User;
 use Error;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Laravel\Socialite\Facades\Socialite;
 use Laravel\Socialite\Two\TwitchProvider;
 use Throwable;
 
-class TwitchTokenManagerService
+final class TwitchTokenManagerService
 {
-    const int MIN_USER_TOKEN_VALIDITY_SECONDS = 900;
+    public const int MIN_USER_TOKEN_VALIDITY_SECONDS = 900;
 
-    const int MIN_APP_TOKEN_VALIDITY_SECONDS = 3600;
+    public const int MIN_APP_TOKEN_VALIDITY_SECONDS = 3600;
 
     /**
      * Ensures that the provided user's access tokens are fresh and valid.

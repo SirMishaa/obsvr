@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Jobs;
 
 use App\Data\TwitchChannelUpdateMessageData;
@@ -11,7 +13,7 @@ use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-class SendBatchedChannelUpdateNotification implements ShouldBeUnique, ShouldQueue
+final class SendBatchedChannelUpdateNotification implements ShouldBeUnique, ShouldQueue
 {
     use Queueable;
 
@@ -26,7 +28,7 @@ class SendBatchedChannelUpdateNotification implements ShouldBeUnique, ShouldQueu
 
     public function handle(): void
     {
-        $cacheKey = 'channel_update_batch:' . $this->favouriteStreamerId;
+        $cacheKey = 'channel_update_batch:'.$this->favouriteStreamerId;
 
         /** @var array<int, array<string, mixed>>|null $updates */
         $updates = Cache::pull($cacheKey);

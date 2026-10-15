@@ -1,18 +1,19 @@
 <script setup lang="ts">
+import { Head, useForm } from '@inertiajs/vue3';
+import { LoaderCircle } from 'lucide-vue-next';
 import InputError from '@/components/InputError.vue';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import AuthLayout from '@/layouts/AuthLayout.vue';
-import { Head, useForm } from '@inertiajs/vue3';
-import { LoaderCircle } from 'lucide-vue-next';
+import { confirm } from '@/routes/password';
 
 const form = useForm({
     password: '',
 });
 
 const submit = () => {
-    form.post(route('password.confirm'), {
+    form.post(confirm.url(), {
         onFinish: () => {
             form.reset();
         },
@@ -21,7 +22,10 @@ const submit = () => {
 </script>
 
 <template>
-    <AuthLayout title="Confirm your password" description="This is a secure area of the application. Please confirm your password before continuing.">
+    <AuthLayout
+        title="Confirm your password"
+        description="This is a secure area of the application. Please confirm your password before continuing."
+    >
         <Head title="Confirm password" />
 
         <form @submit.prevent="submit">
@@ -43,7 +47,10 @@ const submit = () => {
 
                 <div class="flex items-center">
                     <Button class="w-full" :disabled="form.processing">
-                        <LoaderCircle v-if="form.processing" class="h-4 w-4 animate-spin" />
+                        <LoaderCircle
+                            v-if="form.processing"
+                            class="h-4 w-4 animate-spin"
+                        />
                         Confirm Password
                     </Button>
                 </div>

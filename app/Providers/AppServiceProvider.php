@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Event;
@@ -9,7 +11,7 @@ use OpenTelemetry\API\Logs\NoopLogger;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Twitch\TwitchExtendSocialite;
 
-class AppServiceProvider extends ServiceProvider
+final class AppServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
@@ -22,6 +24,18 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->registerOpenTelemetryLoggerFallback();
+    }
+
+    /**
+     * Bootstrap any application services.
+     */
+    public function boot(): void
+    {
+
+        Event::listen(
+            SocialiteWasCalled::class,
+            [TwitchExtendSocialite::class, 'handle']
+        );
     }
 
     /**
@@ -46,17 +60,5 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $this->app->singleton(OpenTelemetryLoggerInterface::class, fn (): NoopLogger => NoopLogger::getInstance());
-    }
-
-    /**
-     * Bootstrap any application services.
-     */
-    public function boot(): void
-    {
-
-        Event::listen(
-            SocialiteWasCalled::class,
-            [TwitchExtendSocialite::class, 'handle']
-        );
     }
 }

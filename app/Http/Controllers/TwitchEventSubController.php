@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use DateTimeInterface;
 use App\Data\TwitchChannelUpdateMessageData;
 use App\Data\TwitchStreamOnlineWebhookMessageData;
 use App\Enums\TwitchSubscriptionStatus;
@@ -12,12 +13,13 @@ use App\Models\FavouriteStreamer;
 use App\Models\TwitchEvent;
 use App\Notifications\TwitchChannelUpdatedNotification;
 use App\Notifications\TwitchStreamerStreamStartedNotification;
+use DateTimeInterface;
 use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
-class TwitchEventSubController extends Controller
+final class TwitchEventSubController extends Controller
 {
     public function handle(TwitchEventSubRequest $webhookRequest): Response
     {
@@ -185,7 +187,7 @@ class TwitchEventSubController extends Controller
                 $batchDelay = $sub?->batch_delay;
 
                 if ($batchDelay && $batchDelay > 0) {
-                    $cacheKey = 'channel_update_batch:' . $favouriteStreamer->id;
+                    $cacheKey = 'channel_update_batch:'.$favouriteStreamer->id;
                     $cached = Cache::get($cacheKey, []);
                     $cached[] = $subscription;
                     Cache::put($cacheKey, $cached, $batchDelay + 60);

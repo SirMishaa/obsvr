@@ -1,11 +1,12 @@
 import { usePage } from '@inertiajs/vue3';
+import type { AppPageProps } from '@/types';
 
 type Replaces = Record<string, string | number>;
 type LangValue = string | { [key: string]: string | LangValue };
 type LangObject = Record<string, LangValue>;
 
 export function useLang() {
-    const page = usePage<{ lang: LangObject }>();
+    const page = usePage<AppPageProps<{ lang: LangObject }>>();
 
     function trans(key: string, replaces: Replaces | string = {}): string {
         const raw = getValueFromKey(key);
@@ -27,7 +28,10 @@ export function useLang() {
     }
 
     function replacePlaceholders(text: string, replaces: Replaces): string {
-        return Object.entries(replaces).reduce((acc, [key, val]) => acc.replaceAll(`{${key}}`, String(val)), text);
+        return Object.entries(replaces).reduce(
+            (acc, [key, val]) => acc.replaceAll(`{${key}}`, String(val)),
+            text,
+        );
     }
 
     function getValueFromKey(key: string): string | undefined {
@@ -36,7 +40,8 @@ export function useLang() {
         let current: any = page.props.lang;
 
         for (const segment of segments) {
-            if (typeof current !== 'object' || current === null) return undefined;
+            if (typeof current !== 'object' || current === null)
+                return undefined;
             current = current[segment];
         }
 

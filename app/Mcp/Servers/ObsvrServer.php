@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mcp\Servers;
 
-use Laravel\Mcp\Server\Tool;
-use Laravel\Mcp\Server\Resource;
-use Laravel\Mcp\Server\Prompt;
 use App\Mcp\Tools\CurrentStreamersInLive;
 use Laravel\Mcp\Server;
+use Laravel\Mcp\Server\Prompt;
+use Laravel\Mcp\Server\Resource;
+use Laravel\Mcp\Server\Tool;
 
-class ObsvrServer extends Server
+final class ObsvrServer extends Server
 {
     /**
      * The MCP server's name.
@@ -56,7 +58,7 @@ class ObsvrServer extends Server
     /**
      * The resources registered with this MCP server.
      *
-     * @var array<int, class-string<Resource>>
+     * @var array<int, class-string<resource>>
      */
     protected array $resources = [
         //

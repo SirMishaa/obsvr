@@ -1,37 +1,44 @@
 <script setup lang="ts">
+import { Link, usePage } from '@inertiajs/vue3';
 import Heading from '@/components/Heading.vue';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { appearance } from '@/routes';
+import { edit as editPassword } from '@/routes/password';
+import { edit as editProfile } from '@/routes/profile';
+import { edit as editSubscriptions } from '@/routes/subscriptions';
 import { type NavItem } from '@/types';
-import { Link, usePage } from '@inertiajs/vue3';
 
 const sidebarNavItems: NavItem[] = [
     {
         title: 'Profile',
-        href: '/settings/profile',
+        href: editProfile.url(),
     },
     {
         title: 'Password',
-        href: '/settings/password',
+        href: editPassword.url(),
     },
     {
         title: 'Appearance',
-        href: '/settings/appearance',
+        href: appearance.url(),
     },
     {
         title: 'Subscriptions',
-        href: '/settings/subscriptions',
+        href: editSubscriptions.url(),
     },
 ];
 
 const page = usePage();
 
-const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.location).pathname : '';
+const currentPath = page.url.split('?')[0];
 </script>
 
 <template>
     <div class="px-4 py-6">
-        <Heading title="Settings" description="Manage your profile and account settings" />
+        <Heading
+            title="Settings"
+            description="Manage your profile and account settings"
+        />
 
         <div class="flex flex-col lg:flex-row lg:space-x-12">
             <aside class="w-full max-w-xl lg:w-48">
@@ -40,7 +47,10 @@ const currentPath = page.props.ziggy?.location ? new URL(page.props.ziggy.locati
                         v-for="item in sidebarNavItems"
                         :key="item.href"
                         variant="ghost"
-                        :class="['w-full justify-start', { 'bg-muted': currentPath === item.href }]"
+                        :class="[
+                            'w-full justify-start',
+                            { 'bg-muted': currentPath === item.href },
+                        ]"
                         as-child
                     >
                         <Link :href="item.href">

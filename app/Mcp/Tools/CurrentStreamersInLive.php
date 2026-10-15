@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Mcp\Tools;
 
 use App\Data\TwitchStreamData;
@@ -16,12 +18,8 @@ use Laravel\Mcp\Server\Tools\Annotations\IsOpenWorld;
 use Throwable;
 
 #[IsOpenWorld]
-class CurrentStreamersInLive extends Tool
+final class CurrentStreamersInLive extends Tool
 {
-    public function __construct(private readonly TwitchTokenManagerService $tokenManagerService, private readonly TwitchApiClient $twitchApiClient)
-    {
-    }
-
     /**
      * The tool's description.
      */
@@ -32,6 +30,8 @@ class CurrentStreamersInLive extends Tool
         stream start times, and other metadata. Results are sorted by viewer count (highest first) and cached
         for optimal performance. Requires Twitch OAuth authentication.
     MARKDOWN;
+
+    public function __construct(private readonly TwitchTokenManagerService $tokenManagerService, private readonly TwitchApiClient $twitchApiClient) {}
 
     /**
      * Handle the tool request.
@@ -56,7 +56,7 @@ class CurrentStreamersInLive extends Tool
             $this->tokenManagerService->ensureFreshUserAccessTokens($user);
             $this->tokenManagerService->ensureFreshAppAccessToken();
         } catch (Throwable $throwable) {
-            return Response::text('Failed to ensure fresh tokens: ' . $throwable->getMessage());
+            return Response::text('Failed to ensure fresh tokens: '.$throwable->getMessage());
         }
 
         $user->refresh();
@@ -96,7 +96,7 @@ class CurrentStreamersInLive extends Tool
         $sortedStreamers = $collection->sortByDesc('viewerCount');
 
         $formattedList = "## Currently Live Streamers ({$totalStreamers})\n";
-        $formattedList .= 'Total viewers: ' . number_format($totalViewers) . "\n\n";
+        $formattedList .= 'Total viewers: '.number_format($totalViewers)."\n\n";
 
         foreach ($sortedStreamers as $streamer) {
             $duration = $streamer->startedAt->diffForHumans(['short' => true]);

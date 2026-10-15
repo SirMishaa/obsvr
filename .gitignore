@@ -40,3 +40,7 @@ resources/js/wayfinder
 resources/js/routes
 resources/js/actions
 fail.txt
+
+# Pest
+/tests/.pest
+/tests/Browser/Screenshots

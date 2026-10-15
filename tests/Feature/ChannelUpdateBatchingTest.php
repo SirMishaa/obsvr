@@ -1,6 +1,7 @@
 <?php
 
-use App\Services\TwitchTokenManagerService;
+declare(strict_types=1);
+
 use App\Enums\TwitchSubscriptionStatus;
 use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
 use App\Jobs\SendBatchedChannelUpdateNotification;
@@ -34,7 +35,7 @@ function buildChannelUpdatePayload(string $streamerId, string $streamerName): ar
         ],
         'event' => [
             'broadcaster_user_id' => $streamerId,
-            'broadcaster_user_login' => strtolower($streamerName),
+            'broadcaster_user_login' => mb_strtolower($streamerName),
             'broadcaster_user_name' => $streamerName,
             'title' => 'New Title',
             'language' => 'en',
@@ -50,7 +51,7 @@ test('channel.update with no batch_delay sends notification immediately', functi
     Bus::fake();
 
     $user = User::factory()->create();
-    $favouriteStreamer = FavouriteStreamer::factory()->create(['user_id' => $user->id,
+    $favouriteStreamer = FavouriteStreamer::factory()->createQuietly(['user_id' => $user->id,
         'streamer_id' => '12345',
         'streamer_name' => 'TestStreamer',
         'subscription_status' => TwitchSubscriptionStatus::ENABLED,
@@ -79,7 +80,7 @@ test('channel.update with batch_delay dispatches delayed job and caches data', f
     Bus::fake();
 
     $user = User::factory()->create();
-    $favouriteStreamer = FavouriteStreamer::factory()->create(['user_id' => $user->id,
+    $favouriteStreamer = FavouriteStreamer::factory()->createQuietly(['user_id' => $user->id,
         'streamer_id' => '67890',
         'streamer_name' => 'BatchStreamer',
         'subscription_status' => TwitchSubscriptionStatus::ENABLED,
@@ -100,9 +101,9 @@ test('channel.update with batch_delay dispatches delayed job and caches data', f
     ])->assertNoContent();
 
     Notification::assertNotSentTo($user, TwitchChannelUpdatedNotification::class);
-    Bus::assertDispatched(SendBatchedChannelUpdateNotification::class, fn($job): bool => $job->favouriteStreamerId === $favouriteStreamer->id);
+    Bus::assertDispatched(SendBatchedChannelUpdateNotification::class, fn ($job): bool => $job->favouriteStreamerId === $favouriteStreamer->id);
 
-    $cached = Cache::get('channel_update_batch:' . $favouriteStreamer->id);
+    $cached = Cache::get('channel_update_batch:'.$favouriteStreamer->id);
     expect($cached)->toBeArray()->toHaveCount(1);
 });
 
@@ -110,7 +111,7 @@ test('batched job sends notification with accumulated updates', function (): voi
     Notification::fake();
 
     $user = User::factory()->create();
-    $favouriteStreamer = FavouriteStreamer::factory()->create(['user_id' => $user->id,
+    $favouriteStreamer = FavouriteStreamer::factory()->createQuietly(['user_id' => $user->id,
         'streamer_id' => '11111',
         'streamer_name' => 'JobStreamer',
         'subscription_status' => TwitchSubscriptionStatus::ENABLED,
@@ -139,20 +140,20 @@ test('batched job sends notification with accumulated updates', function (): voi
         ],
     ];
 
-    Cache::put('channel_update_batch:' . $favouriteStreamer->id, $updates, 300);
+    Cache::put('channel_update_batch:'.$favouriteStreamer->id, $updates, 300);
 
     $job = new SendBatchedChannelUpdateNotification($favouriteStreamer->id);
     $job->handle();
 
-    Notification::assertSentTo($user, TwitchChannelUpdateBatchedNotification::class, fn($notification): bool => count($notification->updates) === 2
+    Notification::assertSentTo($user, TwitchChannelUpdateBatchedNotification::class, fn ($notification): bool => count($notification->updates) === 2
         && $notification->updates[1]->title === 'Second Title');
 
-    expect(Cache::get('channel_update_batch:' . $favouriteStreamer->id))->toBeNull();
+    expect(Cache::get('channel_update_batch:'.$favouriteStreamer->id))->toBeNull();
 });
 
 test('subscription batch_delay can be updated via settings', function (): void {
     $user = User::factory()->create();
-    $favouriteStreamer = FavouriteStreamer::factory()->create(['user_id' => $user->id,
+    $favouriteStreamer = FavouriteStreamer::factory()->createQuietly(['user_id' => $user->id,
         'streamer_id' => '99999',
         'streamer_name' => 'SettingsStreamer',
         'subscription_status' => TwitchSubscriptionStatus::ENABLED,
@@ -163,9 +164,7 @@ test('subscription batch_delay can be updated via settings', function (): void {
         'batch_delay' => null,
     ]);
 
-    $this->mock(TwitchTokenManagerService::class)
-        ->shouldReceive('ensureFreshAppAccessToken')
-        ->andReturn('fake-token');
+    Cache::put('twitch_app_access_token', 'fake-token', now()->addHour());
 
     Http::fake([
         'api.twitch.tv/helix/eventsub/subscriptions*' => Http::response([

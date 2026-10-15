@@ -39,15 +39,16 @@ A modern Laravel application for tracking and monitoring Twitch streams and even
 - **VueUse** - Collection of Vue composition utilities
 
 ### Development Tools
-- **Pest 4** - Modern PHP testing framework with browser testing
-- **Laravel Pint** - Opinionated code formatter
-- **Larastan (PHPStan)** - Static analysis tool
-- **ESLint** - JavaScript linter
-- **Prettier** - Code formatter
+- **Pest 5** - PHP testing framework with browser testing, type coverage and test impact analysis (`--tia`)
+- **Laravel Pint** - Strict code formatter (`pint.json`)
+- **Rector** - Automated refactoring
+- **Larastan (PHPStan)** - Static analysis at level max (`phpstan-baseline.neon` holds pre-existing errors)
+- **Vite+** - Vite, Oxlint and Oxfmt for the frontend
+- **Essentials** - Stricter Laravel defaults (`nunomaduro/essentials`)
 
 ## Requirements
 
-- PHP 8.4 or higher
+- PHP 8.5 or higher
 - Composer
 - Node.js 18+ and Bun (or npm/yarn)
 - SQLite extension (or MySQL/PostgreSQL)
@@ -118,8 +119,10 @@ A modern Laravel application for tracking and monitoring Twitch streams and even
 - `composer run dev` - Start all development services (server, queue, logs, Vite)
 - `composer run dev:octane` - Start with Laravel Octane for better performance
 - `composer run dev:ssr` - Start with Server-Side Rendering support
-- `composer run test` - Run the test suite
-- `composer run lint` - Run PHPStan static analysis
+- `composer run lint` - Apply Rector, Pint, Oxfmt and Oxlint fixes
+- `composer run test` - Run type coverage, tests, lint checks and type checks
+- `composer run test:unit` - Run the tests with coverage and test impact analysis
+- `composer run test:types` - Run PHPStan and vue-tsc
 - `composer run helper` - Generate IDE helper files for better autocomplete
 
 ### NPM/Bun Scripts
@@ -127,10 +130,9 @@ A modern Laravel application for tracking and monitoring Twitch streams and even
 - `bun run dev` - Start Vite development server
 - `bun run build` - Build frontend assets for production
 - `bun run build:ssr` - Build with SSR support
-- `bun run lint` - Run ESLint and auto-fix issues
-- `bun run lint:check` - Check for linting errors without fixing
-- `bun run format` - Format code with Prettier
-- `bun run format:check` - Check code formatting
+- `bun run lint` - Format with Oxfmt and auto-fix with Oxlint
+- `bun run test:lint` - Check formatting and linting without fixing
+- `bun run test:types` - Type-check with vue-tsc
 
 ### Artisan Commands
 
@@ -214,19 +216,16 @@ Web push notifications are configured using the `laravel-notification-channels/w
 
 ### Code Style
 
-This project uses Laravel Pint for PHP and Prettier for JavaScript/Vue. Code is automatically formatted on commit.
+This project uses Rector and Laravel Pint for PHP, and Oxfmt and Oxlint (through Vite+) for JavaScript/Vue.
 
 ```bash
-# Format PHP code
-vendor/bin/pint
-
-# Format JavaScript/Vue code
-bun run format
+# Format and fix everything
+composer run lint
 ```
 
 ### Type Safety
 
-- **PHP**: Larastan (PHPStan) ensures type safety. Run `composer run lint`
+- **PHP**: Larastan (PHPStan) ensures type safety. Run `composer run test:types`
 - **TypeScript**: Full TypeScript support with strict mode
 - **Routes**: Laravel Wayfinder provides type-safe routes in the frontend
 

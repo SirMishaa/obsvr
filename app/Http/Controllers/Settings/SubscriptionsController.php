@@ -1,8 +1,9 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers\Settings;
 
-use Illuminate\Support\Facades\Log;
 use App\Data\TwitchEventSubSubscriptionItemData;
 use App\Enums\TwitchSubscriptionStatus;
 use App\Enums\TwitchSubscriptionType;
@@ -13,11 +14,12 @@ use App\Services\TwitchTokenManagerService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Inertia\Inertia;
 use Inertia\Response;
 
-class SubscriptionsController extends Controller
+final class SubscriptionsController extends Controller
 {
     public function __construct(
         private readonly TwitchApiClient $twitchApiClient,

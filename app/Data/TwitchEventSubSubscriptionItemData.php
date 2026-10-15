@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Data;
 
 use Spatie\LaravelData\Attributes\MapInputName;
@@ -7,7 +9,7 @@ use Spatie\LaravelData\Attributes\WithCast;
 use Spatie\LaravelData\Casts\DateTimeInterfaceCast;
 use Spatie\LaravelData\Data;
 
-class TwitchEventSubSubscriptionItemData extends Data
+final class TwitchEventSubSubscriptionItemData extends Data
 {
     /**
      * @param  array<string, string>  $condition

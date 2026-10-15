@@ -1,8 +1,10 @@
 <?php
 
-use Illuminate\Support\Facades\Date;
+declare(strict_types=1);
+
 use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
 use App\Models\TwitchEvent;
+use Illuminate\Support\Facades\Date;
 
 beforeEach(function (): void {
     Date::setTestNow('2025-11-16 13:00:00');
@@ -35,13 +37,13 @@ test('stream.online event is stored in database', function (): void {
     expect(TwitchEvent::query()->count())->toBe(1);
 
     $event = TwitchEvent::query()->first();
-    expect($event->event_id)->toBe('stream-123');
-    expect($event->event_type)->toBe('stream.online');
-    expect($event->streamer_id)->toBe('123456');
-    expect($event->streamer_name)->toBe('TestStreamer');
-    expect($event->payload)->toBeArray();
-    expect($event->occurred_at->toDateTimeString())->toBe('2025-11-16 13:00:00');
-    expect($event->received_at)->not->toBeNull();
+    expect($event->event_id)->toBe('stream-123')
+        ->and($event->event_type)->toBe('stream.online')
+        ->and($event->streamer_id)->toBe('123456')
+        ->and($event->streamer_name)->toBe('TestStreamer')
+        ->and($event->payload)->toBeArray()
+        ->and($event->occurred_at->toDateTimeString())->toBe('2025-11-16 13:00:00')
+        ->and($event->received_at)->not->toBeNull();
 });
 
 test('stream.offline event is stored in database', function (): void {
@@ -64,10 +66,10 @@ test('stream.offline event is stored in database', function (): void {
     expect(TwitchEvent::query()->count())->toBe(1);
 
     $event = TwitchEvent::query()->first();
-    expect($event->event_id)->toBe('stream-456');
-    expect($event->event_type)->toBe('stream.offline');
-    expect($event->streamer_id)->toBe('789012');
-    expect($event->streamer_name)->toBe('AnotherStreamer');
+    expect($event->event_id)->toBe('stream-456')
+        ->and($event->event_type)->toBe('stream.offline')
+        ->and($event->streamer_id)->toBe('789012')
+        ->and($event->streamer_name)->toBe('AnotherStreamer');
 });
 
 test('channel.update event is stored in database', function (): void {
@@ -95,12 +97,12 @@ test('channel.update event is stored in database', function (): void {
     expect(TwitchEvent::query()->count())->toBe(1);
 
     $event = TwitchEvent::query()->first();
-    expect($event->event_id)->toBe('update-789');
-    expect($event->event_type)->toBe('channel.update');
-    expect($event->streamer_id)->toBe('345678');
-    expect($event->streamer_name)->toBe('UpdateStreamer');
-    expect($event->payload['title'])->toBe('New Stream Title');
-    expect($event->payload['category_name'])->toBe('Just Chatting');
+    expect($event->event_id)->toBe('update-789')
+        ->and($event->event_type)->toBe('channel.update')
+        ->and($event->streamer_id)->toBe('345678')
+        ->and($event->streamer_name)->toBe('UpdateStreamer')
+        ->and($event->payload['title'])->toBe('New Stream Title')
+        ->and($event->payload['category_name'])->toBe('Just Chatting');
 });
 
 test('multiple events are stored separately', function (): void {
@@ -142,10 +144,10 @@ test('multiple events are stored separately', function (): void {
         $response->assertNoContent();
     }
 
-    expect(TwitchEvent::query()->count())->toBe(3);
-    expect(TwitchEvent::query()->where('event_type', 'stream.online')->count())->toBe(1);
-    expect(TwitchEvent::query()->where('event_type', 'channel.update')->count())->toBe(1);
-    expect(TwitchEvent::query()->where('event_type', 'stream.offline')->count())->toBe(1);
+    expect(TwitchEvent::query()->count())->toBe(3)
+        ->and(TwitchEvent::query()->where('event_type', 'stream.online')->count())->toBe(1)
+        ->and(TwitchEvent::query()->where('event_type', 'channel.update')->count())->toBe(1)
+        ->and(TwitchEvent::query()->where('event_type', 'stream.offline')->count())->toBe(1);
 });
 
 /**

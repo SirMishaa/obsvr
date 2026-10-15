@@ -122,5 +122,9 @@
         "resources/js/**/*.d.ts",
         "resources/js/**/*.tsx",
         "resources/js/**/*.vue"
+    ],
+    "exclude": [
+        /* Generated for Route::redirect(), whose `query` verb (Laravel 13) Wayfinder's runtime types do not know yet. */
+        "resources/js/actions/Illuminate/**"
     ]
 }

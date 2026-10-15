@@ -2,11 +2,61 @@ import { wayfinder } from '@laravel/vite-plugin-wayfinder';
 import tailwindcss from '@tailwindcss/vite';
 import vue from '@vitejs/plugin-vue';
 import laravel from 'laravel-vite-plugin';
-import { defineConfig } from 'vite';
 import devtoolsJson from 'vite-plugin-devtools-json';
 import vueDevTools from 'vite-plugin-vue-devtools';
+import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+    lint: {
+        options: {
+            typeAware: true,
+            typeCheck: true,
+        },
+        plugins: ['eslint', 'typescript', 'unicorn', 'oxc', 'vue'],
+        ignorePatterns: ['vite.config.ts'],
+    },
+    fmt: {
+        printWidth: 80,
+        tabWidth: 4,
+        useTabs: false,
+        semi: true,
+        singleQuote: true,
+        overrides: [
+            {
+                files: ['**/*.yml'],
+                options: {
+                    tabWidth: 2,
+                },
+            },
+        ],
+        sortTailwindcss: {
+            functions: ['clsx', 'cn', 'cva'],
+            stylesheet: 'resources/css/app.css',
+        },
+        sortImports: {
+            groups: [
+                'builtin',
+                'external',
+                'internal',
+                'parent',
+                'sibling',
+                'index',
+            ],
+            newlinesBetween: false,
+        },
+        ignorePatterns: [
+            'resources/js/components/ui/*',
+            'resources/views/mail/*',
+            'resources/js/actions/*',
+            'resources/js/routes/*',
+            'resources/js/wayfinder/*',
+        ],
+    },
+    server: {
+        watch: {
+            ignored: ['**/storage/framework/views/**'],
+        },
+    },
     plugins: [
         laravel({
             input: ['resources/js/app.ts'],
@@ -14,6 +64,9 @@ export default defineConfig({
             refresh: true,
         }),
         tailwindcss(),
+        wayfinder({
+            formVariants: true,
+        }),
         vue({
             template: {
                 transformAssetUrls: {
@@ -22,8 +75,6 @@ export default defineConfig({
                 },
             },
         }),
-        /** Ensure that laravel routes frontend helper is being generated automatically */
-        wayfinder(),
         vueDevTools({
             launchEditor: 'phpstorm',
             componentInspector: true,

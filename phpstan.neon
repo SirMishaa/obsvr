@@ -1,12 +1,21 @@
 includes:
+    - phpstan-baseline.neon
     - vendor/larastan/larastan/extension.neon
     - vendor/nesbot/carbon/extension.neon
+    - vendor/pestphp/pest-plugin-phpstan/extension.neon
+    - phar://phpstan.phar/conf/bleedingEdge.neon
 
 parameters:
+
     paths:
-        - app/
-    level: 8
-    ignoreErrors:
-        - '#PHPDoc tag @mixin contains unknown class App\\Models#'
-    excludePaths:
+        - app
+        - bootstrap/app.php
+        - config
+        - database
+        - public
+        - routes
         - tests
+
+    level: max
+
+    tmpDir: /tmp/phpstan

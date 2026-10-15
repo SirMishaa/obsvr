@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Observers;
 
 use App\Data\TwitchEventSubSubscriptionItemData;
@@ -10,7 +12,7 @@ use App\Services\TwitchTokenManagerService;
 use Illuminate\Support\Facades\Log;
 use Throwable;
 
-readonly class UserFavouriteStreamerObserver
+final readonly class UserFavouriteStreamerObserver
 {
     public function __construct(
         private TwitchApiClient $twitchApiClient,

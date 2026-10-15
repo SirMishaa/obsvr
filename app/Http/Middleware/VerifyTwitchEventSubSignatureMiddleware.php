@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Middleware;
 
-use Illuminate\Support\Facades\Date;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
 
-class VerifyTwitchEventSubSignatureMiddleware
+final class VerifyTwitchEventSubSignatureMiddleware
 {
     /**
      * Handle an incoming request.

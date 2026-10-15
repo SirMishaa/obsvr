@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Database\Factories;
 
 use App\Models\TwitchEvent;
@@ -9,7 +11,7 @@ use Tests\Fixtures\TwitchFixtures;
 /**
  * @extends Factory<TwitchEvent>
  */
-class TwitchEventFactory extends Factory
+final class TwitchEventFactory extends Factory
 {
     /**
      * Define the model's default state.
@@ -31,37 +33,6 @@ class TwitchEventFactory extends Factory
             'occurred_at' => fake()->dateTimeBetween('-1 week', 'now'),
             'received_at' => now(),
         ];
-    }
-
-    /**
-     * @return array<string, mixed>
-     */
-    private function generatePayload(string $eventType, array $streamer): array
-    {
-        $basePayload = [
-            'id' => fake()->bothify('########'),
-            'broadcaster_user_id' => $streamer['id'],
-            'broadcaster_user_login' => $streamer['login'],
-            'broadcaster_user_name' => $streamer['name'],
-            'type' => $eventType,
-        ];
-
-        if ($eventType === 'channel.update') {
-            unset($basePayload['id']);
-        }
-
-        return match ($eventType) {
-            'stream.online' => array_merge($basePayload, [
-                'started_at' => fake()->iso8601(),
-            ]),
-            'channel.update' => array_merge($basePayload, [
-                'title' => fake()->randomElement(TwitchFixtures::streamTitles()),
-                'language' => 'fr',
-                'category_id' => ($category = fake()->randomElement(TwitchFixtures::popularCategories()))['id'],
-                'category_name' => $category['name'],
-            ]),
-            default => $basePayload,
-        };
     }
 
     public function streamOnline(): static
@@ -98,6 +69,37 @@ class TwitchEventFactory extends Factory
                 'payload' => $this->generatePayload('channel.update', $streamer),
             ];
         });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function generatePayload(string $eventType, array $streamer): array
+    {
+        $basePayload = [
+            'id' => fake()->bothify('########'),
+            'broadcaster_user_id' => $streamer['id'],
+            'broadcaster_user_login' => $streamer['login'],
+            'broadcaster_user_name' => $streamer['name'],
+            'type' => $eventType,
+        ];
+
+        if ($eventType === 'channel.update') {
+            unset($basePayload['id']);
+        }
+
+        return match ($eventType) {
+            'stream.online' => array_merge($basePayload, [
+                'started_at' => fake()->iso8601(),
+            ]),
+            'channel.update' => array_merge($basePayload, [
+                'title' => fake()->randomElement(TwitchFixtures::streamTitles()),
+                'language' => 'fr',
+                'category_id' => ($category = fake()->randomElement(TwitchFixtures::popularCategories()))['id'],
+                'category_name' => $category['name'],
+            ]),
+            default => $basePayload,
+        };
     }
 
     /**

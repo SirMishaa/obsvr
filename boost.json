@@ -1,11 +1,10 @@
 {
     "agents": [
         "claude_code",
-        "phpstorm"
+        "junie",
+        "opencode"
     ],
-    "editors": [
-        "claude_code",
-        "phpstorm"
-    ],
-    "guidelines": []
+    "guidelines": true,
+    "mcp": false,
+    "sail": false
 }

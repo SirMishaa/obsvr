@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Support\OpenTelemetry;
 
 use OpenTelemetry\SDK\Metrics\AggregationTemporalitySelectorInterface;
@@ -15,7 +17,7 @@ use OpenTelemetry\SDK\Metrics\PushMetricExporterInterface;
  * empty. This decorator strips those before handing the batch to the real
  * exporter, so our own instruments still get exported.
  */
-readonly class DropEmptyMetricsExporter implements AggregationTemporalitySelectorInterface, PushMetricExporterInterface
+final readonly class DropEmptyMetricsExporter implements AggregationTemporalitySelectorInterface, PushMetricExporterInterface
 {
     public function __construct(
         private PushMetricExporterInterface $inner,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Exceptions;
 
-class TwitchUnauthorizedException extends TwitchApiException {}
+final class TwitchUnauthorizedException extends TwitchException {}

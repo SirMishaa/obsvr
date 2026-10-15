@@ -1,0 +1,930 @@
+parameters:
+	ignoreErrors:
+		-
+			rawMessage: 'Method App\Data\TwitchEventSubSubscriptionsResponse::__construct() has parameter $data with generic class Spatie\LaravelData\DataCollection but does not specify its types: TKey, TValue'
+			identifier: missingType.generics
+			count: 1
+			path: app/Data/TwitchEventSubSubscriptionsResponse.php
+
+		-
+			rawMessage: 'Method App\Data\TwitchFollowedChannelsPaginatedResponse::__construct() has parameter $data with generic class Spatie\LaravelData\DataCollection but does not specify its types: TKey, TValue'
+			identifier: missingType.generics
+			count: 1
+			path: app/Data/TwitchFollowedChannelsPaginatedResponse.php
+
+		-
+			rawMessage: 'Method App\Data\TwitchStreamPaginatedResponse::__construct() has parameter $data with generic class Spatie\LaravelData\DataCollection but does not specify its types: TKey, TValue'
+			identifier: missingType.generics
+			count: 1
+			path: app/Data/TwitchStreamPaginatedResponse.php
+
+		-
+			rawMessage: 'Method App\Enums\TwitchSubscriptionStatus::values() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Enums/TwitchSubscriptionStatus.php
+
+		-
+			rawMessage: 'Method App\Enums\TwitchSubscriptionType::values() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Enums/TwitchSubscriptionType.php
+
+		-
+			rawMessage: Cannot access property $email on App\Models\User|null.
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/ConfirmablePasswordController.php
+
+		-
+			rawMessage: 'Cannot call method hasVerifiedEmail() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			rawMessage: 'Cannot call method sendEmailVerificationNotification() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationNotificationController.php
+
+		-
+			rawMessage: 'Cannot call method hasVerifiedEmail() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/EmailVerificationPromptController.php
+
+		-
+			rawMessage: 'Parameter #1 $key of function __ expects string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/NewPasswordController.php
+
+		-
+			rawMessage: 'Parameter #1 $value of static method Illuminate\Support\Facades\Hash::make() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/NewPasswordController.php
+
+		-
+			rawMessage: 'Parameter #1 $value of static method Illuminate\Support\Facades\Hash::make() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Auth/RegisteredUserController.php
+
+		-
+			rawMessage: 'Cannot call method hasVerifiedEmail() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Auth/VerifyEmailController.php
+
+		-
+			rawMessage: Cannot access offset 'streamerName' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/KickController.php
+
+		-
+			rawMessage: Cannot access offset 'auth' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: Cannot access offset 'endpoint' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: Cannot access offset 'keys' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: Cannot access offset 'p256dh' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: Coalesce operator ?? is unnecessary because the left side is always set and the right side is null.
+			identifier: nullCoalesce.unnecessary
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: 'Parameter $endpoint of method App\Models\User::updatePushSubscription() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: 'Parameter $key of method App\Models\User::updatePushSubscription() expects string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: 'Parameter $token of method App\Models\User::updatePushSubscription() expects string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/PushSubscriptionController.php
+
+		-
+			rawMessage: Cannot access offset 'password' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			rawMessage: 'Cannot call method update() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			rawMessage: 'Parameter #1 $value of static method Illuminate\Support\Facades\Hash::make() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/PasswordController.php
+
+		-
+			rawMessage: Cannot access property $email_verified_at on App\Models\User|null.
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			rawMessage: 'Cannot call method delete() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			rawMessage: 'Cannot call method fill() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			rawMessage: 'Cannot call method isDirty() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			rawMessage: 'Cannot call method save() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			rawMessage: Instanceof between App\Models\User|null and Illuminate\Contracts\Auth\MustVerifyEmail will always evaluate to false.
+			identifier: instanceof.alwaysFalse
+			count: 1
+			path: app/Http/Controllers/Settings/ProfileController.php
+
+		-
+			rawMessage: Cannot access offset 'types' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: app/Http/Controllers/Settings/SubscriptionsController.php
+
+		-
+			rawMessage: 'Parameter #1 $array of function array_diff expects array, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/SubscriptionsController.php
+
+		-
+			rawMessage: 'Parameter #2 $array of function array_key_exists expects array, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/SubscriptionsController.php
+
+		-
+			rawMessage: 'Parameter #2 $arrays of function array_diff expects an array of values castable to string, array<mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/SubscriptionsController.php
+
+		-
+			rawMessage: 'Parameter #2 $haystack of function in_array expects array, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/Settings/SubscriptionsController.php
+
+		-
+			rawMessage: Attribute class JetBrains\PhpStorm\ArrayShape does not exist.
+			identifier: attribute.notFound
+			count: 1
+			path: app/Http/Controllers/SocialiteController.php
+
+		-
+			rawMessage: 'Method App\Http\Controllers\SocialiteController::validateOrThrow() has parameter $data with no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/SocialiteController.php
+
+		-
+			rawMessage: 'Parameter #2 $arrays of function array_diff expects an array of values castable to string, array given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/SocialiteController.php
+
+		-
+			rawMessage: 'Property Laravel\Socialite\Two\User::$approvedScopes (array) on left side of ?? is not nullable.'
+			identifier: nullCoalesce.property
+			count: 1
+			path: app/Http/Controllers/SocialiteController.php
+
+		-
+			rawMessage: Value assigned to variable $updatedOrCreatedUser is never read before being overwritten.
+			identifier: assign.overwritten
+			count: 1
+			path: app/Http/Controllers/SocialiteController.php
+
+		-
+			rawMessage: Cannot access offset 'streamerName' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/TwitchController.php
+
+		-
+			rawMessage: 'Parameter #1 $broadcasterIds of method App\Services\TwitchApiClient::getScheduledStreamsForBroadcasters() expects array<int, string>, array<mixed> given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TwitchController.php
+
+		-
+			rawMessage: 'Parameter #1 $userId of method App\Services\TwitchApiClient::getStatusOfFollowedStreamers() expects string, string|null given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TwitchController.php
+
+		-
+			rawMessage: 'Parameter #2 $token of method App\Services\TwitchApiClient::getScheduledStreamsForBroadcasters() expects string, string|null given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TwitchController.php
+
+		-
+			rawMessage: 'Parameter #2 $token of method App\Services\TwitchApiClient::getStatusOfFollowedStreamers() expects string, string|null given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TwitchController.php
+
+		-
+			rawMessage: Cannot access an offset on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Cannot call method notifyNow() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 2
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: Cannot cast mixed to string.
+			identifier: cast.string
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Comparison operation ">" between int<1, max> and 0 is always true.'
+			identifier: greater.alwaysTrue
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Method App\Http\Controllers\TwitchEventSubController::handleChannelUpdateEvent() has parameter $subscription with no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Method App\Http\Controllers\TwitchEventSubController::handleStreamOfflineEvent() has parameter $subscription with no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Method App\Http\Controllers\TwitchEventSubController::handleStreamOnlineEvent() has parameter $subscription with no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Parameter $eventId of method App\Http\Controllers\TwitchEventSubController::storeEvent() expects string|null, mixed given.'
+			identifier: argument.type
+			count: 2
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Parameter $payload of method App\Http\Controllers\TwitchEventSubController::storeEvent() expects array<string, mixed>, array given.'
+			identifier: argument.type
+			count: 3
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Parameter $streamerId of method App\Http\Controllers\TwitchEventSubController::storeEvent() expects string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Parameter $streamerName of method App\Http\Controllers\TwitchEventSubController::storeEvent() expects string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Controllers/TwitchEventSubController.php
+
+		-
+			rawMessage: 'Parameter #1 $string of function str expects string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Middleware/HandleInertiaRequests.php
+
+		-
+			rawMessage: 'Method App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware::handle() should return Symfony\Component\HttpFoundation\Response but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: app/Http/Middleware/VerifyTwitchEventSubSignatureMiddleware.php
+
+		-
+			rawMessage: 'Parameter #1 $value of static method Illuminate\Support\Str::lower() expects string, Illuminate\Support\Stringable given.'
+			identifier: argument.type
+			count: 1
+			path: app/Http/Requests/Auth/LoginRequest.php
+
+		-
+			rawMessage: Cannot access property $id on App\Models\User|null.
+			identifier: property.nonObject
+			count: 1
+			path: app/Http/Requests/Settings/ProfileUpdateRequest.php
+
+		-
+			rawMessage: 'Property App\Http\Requests\TwitchEventSubRequest::$jsonPayload (array) does not accept mixed.'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Http/Requests/TwitchEventSubRequest.php
+
+		-
+			rawMessage: Property App\Http\Requests\TwitchEventSubRequest::$jsonPayload type has no value type specified in iterable type array.
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Http/Requests/TwitchEventSubRequest.php
+
+		-
+			rawMessage: 'Cannot call method notifyNow() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Jobs/SendBatchedChannelUpdateNotification.php
+
+		-
+			rawMessage: 'Parameter #1 $num of function number_format expects float, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Mcp/Tools/CurrentStreamersInLive.php
+
+		-
+			rawMessage: 'Parameter #1 $userId of method App\Services\TwitchApiClient::getStatusOfFollowedStreamers() expects string, string|null given.'
+			identifier: argument.type
+			count: 1
+			path: app/Mcp/Tools/CurrentStreamersInLive.php
+
+		-
+			rawMessage: 'Parameter #2 $token of method App\Services\TwitchApiClient::getStatusOfFollowedStreamers() expects string, string|null given.'
+			identifier: argument.type
+			count: 1
+			path: app/Mcp/Tools/CurrentStreamersInLive.php
+
+		-
+			rawMessage: 'Parameter #2 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Mcp/Tools/CurrentStreamersInLive.php
+
+		-
+			rawMessage: PHPDoc tag @mixin contains unknown class App\Models\IdeHelperFavouriteStreamer.
+			identifier: class.notFound
+			count: 1
+			path: app/Models/FavouriteStreamer.php
+
+		-
+			rawMessage: 'Class App\Models\Subscriptions uses generic trait Illuminate\Database\Eloquent\Factories\HasFactory but does not specify its types: TFactory'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscriptions.php
+
+		-
+			rawMessage: 'Method App\Models\Subscriptions::favouriteStreamer() return type with generic class Illuminate\Database\Eloquent\Relations\BelongsTo does not specify its types: TRelatedModel, TDeclaringModel'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/Subscriptions.php
+
+		-
+			rawMessage: PHPDoc tag @mixin contains unknown class App\Models\IdeHelperSubscriptions.
+			identifier: class.notFound
+			count: 1
+			path: app/Models/Subscriptions.php
+
+		-
+			rawMessage: PHPDoc tag @mixin contains unknown class App\Models\IdeHelperTwitchEvent.
+			identifier: class.notFound
+			count: 1
+			path: app/Models/TwitchEvent.php
+
+		-
+			rawMessage: 'Class App\Models\User uses generic trait Illuminate\Database\Eloquent\Factories\HasFactory but does not specify its types: TFactory'
+			identifier: missingType.generics
+			count: 1
+			path: app/Models/User.php
+
+		-
+			rawMessage: 'Generic type Illuminate\Database\Eloquent\Relations\HasMany<App\Models\FavouriteStreamer> in PHPDoc tag @return does not specify all template types of class Illuminate\Database\Eloquent\Relations\HasMany: TRelatedModel, TDeclaringModel'
+			identifier: generics.lessTypes
+			count: 1
+			path: app/Models/User.php
+
+		-
+			rawMessage: 'Method App\Models\User::favouriteStreamers() should return Illuminate\Database\Eloquent\Relations\HasMany<App\Models\FavouriteStreamer> but returns Illuminate\Database\Eloquent\Relations\HasMany<App\Models\FavouriteStreamer, $this(App\Models\User)>.'
+			identifier: return.type
+			count: 1
+			path: app/Models/User.php
+
+		-
+			rawMessage: PHPDoc tag @mixin contains unknown class App\Models\IdeHelperUser.
+			identifier: class.notFound
+			count: 1
+			path: app/Models/User.php
+
+		-
+			rawMessage: Cannot access property $broadcasterUserLogin on App\Data\TwitchChannelUpdateMessageData|false.
+			identifier: property.nonObject
+			count: 1
+			path: app/Notifications/TwitchChannelUpdateBatchedNotification.php
+
+		-
+			rawMessage: Cannot access offset 'status' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Observers/UserFavouriteStreamerObserver.php
+
+		-
+			rawMessage: Cannot access offset 0 on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Observers/UserFavouriteStreamerObserver.php
+
+		-
+			rawMessage: 'Parameter #6 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Observers/UserFavouriteStreamerObserver.php
+
+		-
+			rawMessage: 'Call to an undefined method Illuminate\Http\Client\Response|Throwable::json().'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Call to an undefined method Illuminate\Http\Client\Response|Throwable::successful().'
+			identifier: method.notFound
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchApiClient::createSubscription() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchApiClient::deleteSubscription() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchApiClient::fetchAllFollowedStreamers() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchApiClient::handleResponse() should return array<string, mixed> but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Offset ''expires_in'' on array{client_id: string, login: string, user_id: string, scopes: array<int, string>, expires_in: int} on left side of ?? always exists and is not nullable.'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: '''
+				PHPDoc tag @return has invalid value (array{
+				  data: array<int, array{
+				    id: string,
+				    status: "enabled"|"webhook_callback_verification_pending"|"webhook_callback_verification_failed"|
+				             "notification_failures_exceeded"|"authorization_revoked"|"user_removed",
+				    type: string,
+				    version: string,
+				    condition: array{broadcaster_user_id: string},
+				    created_at: string,
+				    transport: array{method: "webhook", callback: string},
+				    cost: int
+				  }>,
+				  total: int,
+				  total_cost: int,
+				  max_total_cost: int
+				}): Unexpected token ":", expected '}' at offset 129 on line 5
+			'''
+			identifier: phpDoc.parseError
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Parameter #1 $uri of static method Illuminate\Support\Uri::of() expects string|Stringable, mixed given.'
+			identifier: argument.type
+			count: 2
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Property App\Services\TwitchApiClient::$authUrl (Illuminate\Support\Uri) does not accept Illuminate\Support\Uri|null.'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Property App\Services\TwitchApiClient::$baseUrl (Illuminate\Support\Uri) does not accept Illuminate\Support\Uri|null.'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Property App\Services\TwitchApiClient::$baseUrl in empty() is not falsy nor uninitialized.'
+			identifier: empty.initializedProperty
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: 'Property App\Services\TwitchApiClient::$clientId (string) does not accept mixed.'
+			identifier: assign.propertyType
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: Variable $total on left side of ?? always exists and is not nullable.
+			identifier: nullCoalesce.variable
+			count: 1
+			path: app/Services/TwitchApiClient.php
+
+		-
+			rawMessage: Cannot access offset 'access_token' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: Cannot access offset 'expires_in' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: 'Cannot call method diffForHumans() on string.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: 'Cannot call method gt() on string.'
+			identifier: method.nonObject
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: Cannot cast mixed to int.
+			identifier: cast.int
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchTokenManagerService::ensureFreshAppAccessToken() should return string but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchTokenManagerService::ensureFreshUserAccessTokens() should return array{access_token: string, refresh_token: string, expires_at: Illuminate\Support\Carbon} but returns array{access_token: non-falsy-string, refresh_token: non-falsy-string, expires_at: Carbon\CarbonImmutable}.'
+			identifier: return.type
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: 'Method App\Services\TwitchTokenManagerService::ensureFreshUserAccessTokens() should return array{access_token: string, refresh_token: string, expires_at: Illuminate\Support\Carbon} but returns array{access_token: non-falsy-string, refresh_token: non-falsy-string, expires_at: string}.'
+			identifier: return.type
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: 'Parameter #4 ...$values of function sprintf expects bool|float|int|string|null, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: app/Services/TwitchTokenManagerService.php
+
+		-
+			rawMessage: Instanceof between OpenTelemetry\SDK\Metrics\Data\Metric and OpenTelemetry\SDK\Metrics\Data\Metric will always evaluate to true.
+			identifier: instanceof.alwaysTrue
+			count: 1
+			path: app/Support/OpenTelemetry/DropEmptyMetricsExporter.php
+
+		-
+			rawMessage: 'Parameter #1 $title of static method Illuminate\Support\Str::slug() expects string, bool|string given.'
+			identifier: argument.type
+			count: 1
+			path: config/cache.php
+
+		-
+			rawMessage: 'Parameter #1 $title of static method Illuminate\Support\Str::slug() expects string, bool|string given.'
+			identifier: argument.type
+			count: 1
+			path: config/database.php
+
+		-
+			rawMessage: 'Parameter #1 $title of static method Illuminate\Support\Str::slug() expects string, bool|string given.'
+			identifier: argument.type
+			count: 1
+			path: config/session.php
+
+		-
+			rawMessage: Cannot access offset 'id' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 2
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: Cannot access offset 'login' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: Cannot access offset 'name' on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: 'Method Database\Factories\TwitchEventFactory::generatePayload() has parameter $streamer with no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: 'Method Database\Factories\TwitchEventFactory::getStreamerFromAttributes() should return array{id: string, login: string, name: string} but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: 'Parameter #1 $eventType of method Database\Factories\TwitchEventFactory::generatePayload() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: 'Parameter #2 $streamer of method Database\Factories\TwitchEventFactory::generatePayload() expects array, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: database/factories/TwitchEventFactory.php
+
+		-
+			rawMessage: 'Static property Database\Factories\UserFactory::$password (string|null) is never assigned null so it can be removed from the property type.'
+			identifier: property.unusedType
+			count: 1
+			path: database/factories/UserFactory.php
+
+		-
+			rawMessage: 'Parameter #1 $name of static method Illuminate\Support\Facades\Schema::connection() expects string|null, mixed given.'
+			identifier: argument.type
+			count: 2
+			path: database/migrations/2025_08_27_163317_create_push_subscriptions_table.php
+
+		-
+			rawMessage: 'Parameter #1 $table of method Illuminate\Database\Schema\Builder::create() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: database/migrations/2025_08_27_163317_create_push_subscriptions_table.php
+
+		-
+			rawMessage: 'Parameter #1 $table of method Illuminate\Database\Schema\Builder::dropIfExists() expects string, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: database/migrations/2025_08_27_163317_create_push_subscriptions_table.php
+
+		-
+			rawMessage: 'Method Illuminate\Database\Migrations\Migration@anonymous/database/migrations/2025_08_28_012758_create_telescope_entries_table.php:9::getConnection() should return string|null but returns mixed.'
+			identifier: return.type
+			count: 1
+			path: database/migrations/2025_08_28_012758_create_telescope_entries_table.php
+
+		-
+			rawMessage: 'Cannot call method hasVerifiedEmail() on App\Models\User|null.'
+			identifier: method.nonObject
+			count: 2
+			path: tests/Feature/Auth/EmailVerificationTest.php
+
+		-
+			rawMessage: Binary operation "." between '/reset-password/' and mixed results in an error.
+			identifier: binaryOp.invalid
+			count: 1
+			path: tests/Feature/Auth/PasswordResetTest.php
+
+		-
+			rawMessage: Cannot access property $token on mixed.
+			identifier: property.nonObject
+			count: 2
+			path: tests/Feature/Auth/PasswordResetTest.php
+
+		-
+			rawMessage: Cannot access offset 1 on mixed.
+			identifier: offsetAccess.nonOffsetAccessible
+			count: 1
+			path: tests/Feature/ChannelUpdateBatchingTest.php
+
+		-
+			rawMessage: Cannot access property $favouriteStreamerId on mixed.
+			identifier: property.nonObject
+			count: 1
+			path: tests/Feature/ChannelUpdateBatchingTest.php
+
+		-
+			rawMessage: Cannot access property $title on mixed.
+			identifier: property.nonObject
+			count: 1
+			path: tests/Feature/ChannelUpdateBatchingTest.php
+
+		-
+			rawMessage: Cannot access property $updates on mixed.
+			identifier: property.nonObject
+			count: 2
+			path: tests/Feature/ChannelUpdateBatchingTest.php
+
+		-
+			rawMessage: 'Function buildChannelUpdatePayload() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Feature/ChannelUpdateBatchingTest.php
+
+		-
+			rawMessage: 'Parameter #1 $value of function count expects array|Countable, mixed given.'
+			identifier: argument.type
+			count: 1
+			path: tests/Feature/ChannelUpdateBatchingTest.php
+
+		-
+			rawMessage: 'Cannot call method assertSuccessful() on Illuminate\Testing\PendingCommand|int.'
+			identifier: method.nonObject
+			count: 3
+			path: tests/Feature/ReportEventSubHeartbeatTest.php
+
+		-
+			rawMessage: 'Cannot call method component() on mixed.'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Feature/TwitchControllerTest.php
+
+		-
+			rawMessage: 'Cannot call method has() on mixed.'
+			identifier: method.nonObject
+			count: 4
+			path: tests/Feature/TwitchControllerTest.php
+
+		-
+			rawMessage: 'Calling toBeArray() on Expectation<string>; assertion is impossible.'
+			identifier: pest.expectation.impossible
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $event_id on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 3
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $event_type on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 3
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $occurred_at on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $payload on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 3
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $received_at on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $streamer_id on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 3
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Cannot access property $streamer_name on App\Models\TwitchEvent|null.
+			identifier: property.nonObject
+			count: 3
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: 'Cannot call method toDateTimeString() on string.'
+			identifier: method.nonObject
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Offset 'category_name' does not exist on string.
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: Offset 'title' does not exist on string.
+			identifier: offsetAccess.notFound
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: 'Unable to resolve the template type TAndValue in call to method Pest\Expectation<array<int|string, mixed>>::and()'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: 'Unable to resolve the template type TAndValue in call to method Pest\Expectation<mixed>::and()'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: 'Unable to resolve the template type TAndValue in call to method Pest\Expectation<string|null>::and()'
+			identifier: argument.templateType
+			count: 1
+			path: tests/Feature/TwitchEventSubControllerTest.php
+
+		-
+			rawMessage: 'Method Tests\Mocks\TwitchApiResponses::appAccessToken() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Mocks/TwitchApiResponses.php
+
+		-
+			rawMessage: 'Method Tests\Mocks\TwitchApiResponses::eventSubSubscriptions() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Mocks/TwitchApiResponses.php
+
+		-
+			rawMessage: 'Method Tests\Mocks\TwitchApiResponses::followedChannels() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Mocks/TwitchApiResponses.php
+
+		-
+			rawMessage: 'Method Tests\Mocks\TwitchApiResponses::followedStreams() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Mocks/TwitchApiResponses.php
+
+		-
+			rawMessage: 'Method Tests\Mocks\TwitchApiResponses::refreshToken() return type has no value type specified in iterable type array.'
+			identifier: missingType.iterableValue
+			count: 1
+			path: tests/Mocks/TwitchApiResponses.php
+
+		-
+			rawMessage: 'Calling toBeTrue() on Expectation<true>; assertion is redundant.'
+			identifier: pest.expectation.redundant
+			count: 1
+			path: tests/Unit/ExampleTest.php

@@ -1,14 +1,16 @@
 <?php
 
-use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
+declare(strict_types=1);
+
 use App\Http\Controllers\PushSubscriptionController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\TwitchController;
 use App\Http\Controllers\TwitchEventSubController;
+use App\Http\Middleware\VerifyTwitchEventSubSignatureMiddleware;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', fn() => Inertia::render('Welcome'))->name('home');
+Route::get('/', fn () => Inertia::render('Welcome'))->name('home');
 
 Route::get('/.well-known/appspecific/com.chrome.devtools.json', function () {
     if (app()->environment('local')) {
@@ -18,7 +20,7 @@ Route::get('/.well-known/appspecific/com.chrome.devtools.json', function () {
     abort(404);
 })->name('devtools');
 
-Route::get('dashboard', fn() => to_route('twitch'))->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('dashboard', fn () => to_route('twitch'))->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::prefix('twitch')->group(function (): void {
     Route::get('/', [TwitchController::class, 'index'])

@@ -9,42 +9,47 @@
     ],
     "license": "MIT",
     "require": {
-        "php": "^8.4",
+        "php": "^8.5.0",
         "ext-openssl": "*",
-        "cweagans/composer-patches": "*",
-        "erag/laravel-lang-sync-inertia": "^2.3",
-        "inertiajs/inertia-laravel": "^3.3.1",
-        "keepsuit/laravel-opentelemetry": "^2.2.5",
+        "cweagans/composer-patches": "^2.0",
+        "erag/laravel-lang-sync-inertia": "^2.4",
+        "inertiajs/inertia-laravel": "^3.5.1",
+        "keepsuit/laravel-opentelemetry": "^2.2.7",
         "laravel-notification-channels/webpush": "^12.1.0",
-        "laravel/framework": "^13.25",
-        "laravel/nightwatch": "^1.28.7",
-        "laravel/octane": "^2.19.0",
-        "laravel/socialite": "^5.29.0",
-        "laravel/telescope": "^5.22.1",
+        "laravel/framework": "^13.36",
+        "laravel/nightwatch": "^1.30.3",
+        "laravel/octane": "^2.22.0",
+        "laravel/socialite": "^5.31.0",
+        "laravel/telescope": "^5.26.0",
         "laravel/tinker": "^3.0.2",
         "laravel/wayfinder": "^0.1.21",
+        "nunomaduro/essentials": "^1.2",
         "php-ds/php-ds": "^2.0.1",
         "socialiteproviders/twitch": "^5.4.0",
-        "spatie/laravel-data": "^4.23.0",
-        "tightenco/ziggy": "^2.6.3"
+        "spatie/laravel-data": "^4.23.0"
     },
     "require-dev": {
-        "barryvdh/laravel-debugbar": "^4.4.1",
+        "barryvdh/laravel-debugbar": "^4.4.4",
         "barryvdh/laravel-ide-helper": "^3.7.0",
-        "brianium/paratest": "^7.24.0",
-        "driftingly/rector-laravel": "^2.5",
+        "driftingly/rector-laravel": "^2.6.2",
         "fakerphp/faker": "^1.24.1",
-        "larastan/larastan": "^3.10.0",
-        "laravel/boost": "^2.5.3",
+        "larastan/larastan": "^3.13.0",
+        "laravel/boost": "^2.10.3",
         "laravel/pail": "^1.2.7",
-        "laravel/pint": "^1.30.5",
-        "laravel/sail": "^1.66.0",
-        "mockery/mockery": "^1.6.13",
+        "laravel/pao": "^1.1.5",
+        "laravel/pint": "^1.32.1",
+        "laravel/sail": "^1.69.0",
+        "mockery/mockery": "^1.6.15",
         "nunomaduro/collision": "^8.9.5",
-        "pestphp/pest": "^5.1.1",
+        "pestphp/pest": "^5.3.2",
+        "pestphp/pest-plugin-agent": "^5.0",
+        "pestphp/pest-plugin-browser": "^5.1.2",
         "pestphp/pest-plugin-laravel": "^5.0.1",
-        "phpunit/phpunit": "13.3.0",
-        "rector/rector": "^2.6.2"
+        "pestphp/pest-plugin-phpstan": "^5.2.2",
+        "pestphp/pest-plugin-rector": "^5.0.6",
+        "pestphp/pest-plugin-type-coverage": "^5.0.3",
+        "rector/rector": "^2.7.0",
+        "roave/security-advisories": "dev-latest"
     },
     "autoload": {
         "psr-4": {
@@ -59,33 +64,17 @@
         }
     },
     "scripts": {
-        "post-autoload-dump": [
-            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
-            "@php artisan package:discover --ansi"
-        ],
-        "post-update-cmd": [
-            "@php artisan vendor:publish --tag=laravel-assets --ansi --force"
-        ],
-        "post-root-package-install": [
-            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
-        ],
-        "post-create-project-cmd": [
-            "@php artisan key:generate --ansi",
-            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
-            "@php artisan migrate --graceful --ansi"
-        ],
-        "helper": [
-            "@php artisan ide-helper:generate --helpers",
-            "@php artisan ide-helper:meta",
-            "@php artisan ide-helper:models --write-mixin"
-        ],
-        "lint": [
-            "Composer\\Config::disableProcessTimeout",
-            "./vendor/bin/phpstan analyse --memory-limit=2G"
+        "setup": [
+            "composer install",
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\"",
+            "@php artisan key:generate",
+            "@php artisan migrate --force",
+            "bun install",
+            "bun run build"
         ],
         "dev": [
             "Composer\\Config::disableProcessTimeout",
-            "bunx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"bun run dev\" --names=server,queue,logs,vite --kill-others"
+            "@php artisan dev"
         ],
         "dev:octane": [
             "Composer\\Config::disableProcessTimeout",
@@ -100,9 +89,56 @@
             "Composer\\Config::disableProcessTimeout",
             "bunx concurrently -c \"#93c5fd,#c4b5fd,#fb7185,#fdba74\" \"php artisan serve\" \"php artisan queue:listen --tries=1\" \"php artisan pail --timeout=0\" \"php artisan inertia:start-ssr\" --names=server,queue,logs,ssr --kill-others"
         ],
+        "helper": [
+            "@php artisan ide-helper:generate --helpers",
+            "@php artisan ide-helper:meta",
+            "@php artisan ide-helper:models --write-mixin"
+        ],
+        "post-autoload-dump": [
+            "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
+            "@php artisan package:discover --ansi"
+        ],
+        "post-update-cmd": [
+            "@php artisan vendor:publish --tag=laravel-assets --ansi --force",
+            "@php artisan clear",
+            "@update:requirements"
+        ],
+        "pre-package-uninstall": [
+            "Illuminate\\Foundation\\ComposerScripts::prePackageUninstall"
+        ],
+        "post-root-package-install": [
+            "@php -r \"file_exists('.env') || copy('.env.example', '.env');\""
+        ],
+        "post-create-project-cmd": [
+            "@php artisan key:generate --ansi",
+            "@php -r \"file_exists('database/database.sqlite') || touch('database/database.sqlite');\"",
+            "@php artisan migrate --graceful --ansi"
+        ],
+        "update:requirements": [
+            "composer bump",
+            "bunx npm-check-updates"
+        ],
+        "lint": [
+            "rector",
+            "pint --parallel",
+            "bun run lint"
+        ],
+        "test:type-coverage": "@php -d memory_limit=2G vendor/bin/pest --type-coverage --min=100",
+        "test:lint": [
+            "pint --parallel --test",
+            "rector --dry-run",
+            "bun run test:lint"
+        ],
+        "test:unit": "XDEBUG_MODE=\"coverage\" pest --parallel --coverage --tia",
+        "test:types": [
+            "phpstan --memory-limit=2G",
+            "bun run test:types"
+        ],
         "test": [
-            "@php artisan config:clear --ansi",
-            "@php artisan test"
+            "@test:type-coverage",
+            "@test:unit",
+            "@test:lint",
+            "@test:types"
         ]
     },
     "extra": {

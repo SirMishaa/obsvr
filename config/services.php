@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 return [
 
     /*
@@ -43,6 +45,12 @@ return [
         'auth_url' => env('TWITCH_AUTH_URL', 'https://id.twitch.tv'),
         'eventsub_callback_url' => env('TWITCH_EVENTSUB_CALLBACK_URL'),
         'eventsub_secret' => env('TWITCH_EVENTSUB_SECRET'),
+    ],
+
+    'kick' => [
+        'client_id' => env('KICK_CLIENT_ID'),
+        'client_secret' => env('KICK_CLIENT_SECRET'),
+        'redirect' => env('KICK_REDIRECT_URI'),
     ],
 
 ];

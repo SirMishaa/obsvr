@@ -1,31 +1,34 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
-use Illuminate\Support\Facades\Date;
 use App\Data\TwitchBroadcastScheduleResponse;
 use App\Data\TwitchEventSubSubscriptionsResponse;
 use App\Data\TwitchFollowedChannelsPaginatedResponse;
 use App\Data\TwitchStreamPaginatedResponse;
 use App\Exceptions\TwitchApiException;
+use App\Exceptions\TwitchException;
 use App\Exceptions\TwitchUnauthorizedException;
 use Exception;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Pool;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Uri;
 use RuntimeException;
 
-readonly class TwitchApiClient
+final readonly class TwitchApiClient
 {
-    protected string $clientId;
+    private string $clientId;
 
-    protected Uri $baseUrl;
+    private Uri $baseUrl;
 
-    protected Uri $authUrl;
+    private Uri $authUrl;
 
     public function __construct()
     {
@@ -81,19 +84,19 @@ readonly class TwitchApiClient
 
             try {
                 return $this->handleResponse($this->getHttpClient($token), $url);
-            } catch (TwitchApiException $twitchApiException) {
+            } catch (TwitchException $twitchException) {
                 /**
                  * If the broadcaster does not have a schedule, Twitch returns a 404.
                  * In this case, we cache a null response for half the TTL duration.
                  * This prevents spamming API calls for broadcasters without schedules.
                  */
-                if ($twitchApiException->getStatusCode() === 404) {
+                if ($twitchException->getStatusCode() === 404) {
                     Cache::put($cacheKey, null, Date::now()->addSeconds((int) ($ttlFromNow / 2)));
 
                     return null;
                 }
 
-                throw $twitchApiException;
+                throw $twitchException;
             }
         });
 
@@ -129,7 +132,7 @@ readonly class TwitchApiClient
                 fn (string $id) => $pool->as($id)
                     ->withHeaders([
                         'Client-Id' => $this->clientId,
-                        'Authorization' => 'Bearer ' . $token,
+                        'Authorization' => 'Bearer '.$token,
                     ])
                     ->acceptJson()
                     ->get((string) $this->baseUrl->withPath('/helix/schedule')->withQuery(['broadcaster_id' => $id]))
@@ -160,7 +163,7 @@ readonly class TwitchApiClient
             $schedule = TwitchBroadcastScheduleResponse::from($response);
 
             $nextSegment = collect($schedule->data['segments'] ?? [])
-                ->filter(fn ($seg): bool => ! $seg['canceled_until'] && Date::parse($seg['start_time'])->isFuture())
+                ->filter(fn (array $seg): bool => ! $seg['canceled_until'] && Date::parse($seg['start_time'])->isFuture())
                 ->sortBy('start_time')
                 ->first();
 
@@ -347,6 +350,35 @@ readonly class TwitchApiClient
     }
 
     /**
+     * Validates an OAuth2 token to ensure it is still active and meets the minimum validity duration.
+     *
+     * @param  string  $token  The OAuth2 token to be validated.
+     * @param  int  $minValidity  The minimum number of seconds the token should remain valid. Default is 120 seconds.
+     * @return bool Returns true if the token is valid and meets the minimum validity, false otherwise.
+     */
+    public function verifyTokenValidity(string $token, int $minValidity = 120): bool
+    {
+        $url = $this->authUrl->withPath('/oauth2/validate');
+        try {
+            /**
+             * @var array{
+             *     client_id: string,
+             *     login: string,
+             *     user_id: string,
+             *     scopes: array<int, string>,
+             *     expires_in: int,
+             * } $response
+             */
+            $response = $this->handleResponse($this->getHttpClient($token), $url);
+            $expiresIn = $response['expires_in'] ?? 0;
+
+            return $expiresIn >= $minValidity;
+        } catch (TwitchUnauthorizedException) {
+            return false;
+        }
+    }
+
+    /**
      * Fetches all followed streamers for the given user.
      *
      * This method retrieves a complete list of followed streamers for a specified user by
@@ -364,9 +396,7 @@ readonly class TwitchApiClient
         do {
             $page = $this->fetchFollowedStreamersPage($userId, $token, $cursor);
 
-            if ($total === null) {
-                $total = $page->total;
-            }
+            $total ??= $page->total;
 
             $allItems = array_merge($allItems, $page->data->toArray());
 
@@ -426,7 +456,7 @@ readonly class TwitchApiClient
     {
         return Http::withHeaders([
             'Client-Id' => $this->clientId,
-            'Authorization' => 'Bearer ' . $token,
+            'Authorization' => 'Bearer '.$token,
         ])->acceptJson();
     }
 
@@ -442,12 +472,13 @@ readonly class TwitchApiClient
     private function handleResponse(PendingRequest $pendingRequestOrClient, Uri $uri, string $method = 'GET', array $data = []): array
     {
         try {
-            $response = match (strtoupper($method)) {
-                'POST' => $pendingRequestOrClient->post($uri, $data),
-                'PUT' => $pendingRequestOrClient->put($uri, $data),
-                'PATCH' => $pendingRequestOrClient->patch($uri, $data),
-                'DELETE' => $pendingRequestOrClient->delete($uri, $data),
-                default => $pendingRequestOrClient->get($uri),
+            $url = (string) $uri;
+            $response = match (mb_strtoupper($method)) {
+                'POST' => $pendingRequestOrClient->post($url, $data),
+                'PUT' => $pendingRequestOrClient->put($url, $data),
+                'PATCH' => $pendingRequestOrClient->patch($url, $data),
+                'DELETE' => $pendingRequestOrClient->delete($url, $data),
+                default => $pendingRequestOrClient->get($url),
             };
 
             if ($response->failed()) {
@@ -473,7 +504,7 @@ readonly class TwitchApiClient
 
                 return $formatedResponse ?? [];
             } catch (Exception) {
-                if (strtoupper($method) !== 'DELETE') {
+                if (mb_strtoupper($method) !== 'DELETE') {
                     Log::warning('Failed to parse JSON response from Twitch API: '.$response->body());
                 }
 
@@ -483,37 +514,9 @@ readonly class TwitchApiClient
         } catch (ConnectionException $connectionException) {
             throw new TwitchApiException('Failed to connect to Twitch API: '.$connectionException->getMessage(), $connectionException->getCode(), previous: $connectionException);
         } catch (Exception $exception) {
-            throw_if($exception instanceof TwitchApiException, $exception);
+            throw_if($exception instanceof TwitchException, $exception);
 
             throw new TwitchApiException($exception->getMessage(), $exception->getCode(), previous: $exception);
-        }
-    }
-
-    /**
-     * Validates an OAuth2 token to ensure it is still active and meets the minimum validity duration.
-     *
-     * @param  string  $token  The OAuth2 token to be validated.
-     * @param  int  $minValidity  The minimum number of seconds the token should remain valid. Default is 120 seconds.
-     * @return bool Returns true if the token is valid and meets the minimum validity, false otherwise.
-     */
-    public function verifyTokenValidity(string $token, int $minValidity = 120): bool
-    {
-        $url = $this->authUrl->withPath('/oauth2/validate');
-        try {
-            /**
-             * @var array{
-             *     client_id: string,
-             *     login: string,
-             *     user_id: string,
-             *     scopes: array<int, string>,
-             *     expires_in: int,
-             * } $response
-             */
-            $response = $this->handleResponse($this->getHttpClient($token), $url);
-            $expiresIn = $response['expires_in'] ?? 0;
-            return $expiresIn >= $minValidity;
-        } catch (TwitchUnauthorizedException) {
-            return false;
         }
     }
 }

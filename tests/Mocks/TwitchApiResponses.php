@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Mocks;
 
-class TwitchApiResponses
+final class TwitchApiResponses
 {
     /**
      * Mock response for followed channels endpoint

@@ -2,16 +2,15 @@
 
 declare(strict_types=1);
 
+use Pest\Rector\Set\PestSetList;
 use Rector\Caching\ValueObject\Storage\FileCacheStorage;
 use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsParentRector;
 use Rector\Config\RectorConfig;
 use Rector\Php83\Rector\ClassMethod\AddOverrideAttributeToOverriddenMethodsRector;
 use Rector\Php85\Rector\Property\AddOverrideAttributeToOverriddenPropertiesRector;
 use RectorLaravel\Set\LaravelSetList;
-use RectorLaravel\Set\LaravelSetProvider;
 
 return RectorConfig::configure()
-    ->withSetProviders(LaravelSetProvider::class)
     ->withSets([
         LaravelSetList::LARAVEL_ARRAYACCESS_TO_METHOD_CALL,
         LaravelSetList::LARAVEL_ARRAY_STR_FUNCTION_TO_STATIC_CALL,
@@ -23,6 +22,7 @@ return RectorConfig::configure()
         LaravelSetList::LARAVEL_FACTORIES,
         LaravelSetList::LARAVEL_IF_HELPERS,
         LaravelSetList::LARAVEL_LEGACY_FACTORIES_TO_CLASSES,
+        PestSetList::CODING_STYLE,
     ])
     ->withImportNames(
         removeUnusedImports: true,
@@ -33,18 +33,22 @@ return RectorConfig::configure()
         cacheClass: FileCacheStorage::class,
     )
     ->withPaths([
-        __DIR__ . '/app',
-        __DIR__ . '/bootstrap/app.php',
-        __DIR__ . '/config',
-        __DIR__ . '/database',
-        __DIR__ . '/public',
-        __DIR__ . '/routes',
-        __DIR__ . '/tests',
+        __DIR__.'/app',
+        __DIR__.'/bootstrap/app.php',
+        __DIR__.'/config',
+        __DIR__.'/database',
+        __DIR__.'/public',
+        __DIR__.'/routes',
+        __DIR__.'/tests',
     ])
     ->withSkip([
         AddOverrideAttributeToOverriddenMethodsRector::class,
         MakeInheritedMethodVisibilitySameAsParentRector::class,
         AddOverrideAttributeToOverriddenPropertiesRector::class,
+
+        // This file runs before Composer's autoloader is required on its last
+        // line, so it cannot reference framework classes.
+        __DIR__.'/public/frankenphp-worker.php',
     ])
     ->withPreparedSets(
         deadCode: true,

@@ -1,11 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
-use Throwable;
-use App\Models\User;
 use App\Models\FavouriteStreamer;
 use App\Models\TwitchEvent;
+use App\Models\User;
 use App\Services\TwitchApiClient;
 use App\Services\TwitchTokenManagerService;
 use Illuminate\Http\JsonResponse;
@@ -13,8 +14,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
-class TwitchController extends Controller
+final class TwitchController extends Controller
 {
     public function __construct(
         private readonly TwitchApiClient $twitchApiClient,

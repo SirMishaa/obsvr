@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Notifications;
 
 use App\Data\TwitchChannelUpdateMessageData;
@@ -8,7 +10,7 @@ use NotificationChannels\WebPush\WebPushChannel;
 use NotificationChannels\WebPush\WebPushMessage;
 use Uri;
 
-class TwitchChannelUpdateBatchedNotification extends Notification
+final class TwitchChannelUpdateBatchedNotification extends Notification
 {
     /**
      * @param  array<int, TwitchChannelUpdateMessageData>  $updates
@@ -17,12 +19,15 @@ class TwitchChannelUpdateBatchedNotification extends Notification
         public array $updates,
     ) {}
 
-    public function via($notifiable): array
+    /**
+     * @return array<int, class-string>
+     */
+    public function via(object $notifiable): array
     {
         return [WebPushChannel::class];
     }
 
-    public function toWebPush($notifiable, $notification): WebPushMessage
+    public function toWebPush(object $notifiable, Notification $notification): WebPushMessage
     {
         $latest = end($this->updates);
         $count = count($this->updates);
