@@ -38,6 +38,7 @@ Route::prefix('twitch')->group(function (): void {
 Route::prefix('lol')->middleware(['auth', 'verified'])->group(function (): void {
     Route::get('/', [LolController::class, 'index'])->name('lol');
     Route::post('leagues/{league}', [LolController::class, 'toggleLeague'])->name('lol.leagues.toggle');
+    Route::patch('leagues/{league}', [LolController::class, 'updateLeague'])->name('lol.leagues.update');
 });
 
 Route::prefix('auth/{provider}')
