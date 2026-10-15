@@ -11,3 +11,4 @@ Artisan::command('inspire', function (): void {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('app:report-event-sub-heartbeat')->hourly();
+Schedule::command('lol:sync-schedule')->hourly();
