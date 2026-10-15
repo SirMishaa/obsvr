@@ -128,7 +128,8 @@ users
 lol_matches
   id (string PK, id lolesports ; $incrementing=false, $keyType='string'), league (LolLeague), start_time (datetime UTC)
   state (string), block_name (string nullable), best_of (unsigned tinyint nullable)
-  teams (json : [{name, code, image}]), timestamps
+  teams (json : [{name, code, image}]), watch_ended_at (nullable : début notifié,
+  match terminé ou abandonné ; jamais écrasé par la sync), timestamps
 
 lol_match_notifications
   id, lol_match_id (fk string cascade), user_id (fk cascade), type (reminder|started)
