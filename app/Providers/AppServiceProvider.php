@@ -4,7 +4,9 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\ServiceProvider;
 use OpenTelemetry\API\Logs\LoggerInterface as OpenTelemetryLoggerInterface;
 use OpenTelemetry\API\Logs\NoopLogger;
@@ -31,11 +33,30 @@ final class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->configureModelStrictness();
 
         Event::listen(
             SocialiteWasCalled::class,
             [TwitchExtendSocialite::class, 'handle']
         );
+    }
+
+    /**
+     * Strict models everywhere except production, where a lazy-loading violation is logged instead of failing the request.
+     */
+    private function configureModelStrictness(): void
+    {
+        if (! $this->app->isProduction()) {
+            Model::shouldBeStrict();
+
+            return;
+        }
+
+        Model::shouldBeStrict(false);
+        Model::preventLazyLoading();
+        Model::handleLazyLoadingViolationUsing(function (Model $model, string $relation): void {
+            Log::warning(sprintf('Lazy loading [%s] on model [%s].', $relation, $model::class));
+        });
     }
 
     /**
