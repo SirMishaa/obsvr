@@ -4,11 +4,20 @@ declare(strict_types=1);
 
 namespace Tests\Mocks;
 
+use GuzzleHttp\Promise\PromiseInterface;
 use Illuminate\Support\Facades\Http;
 
 final class LolEsportsResponses
 {
     public const string MATCH_ID = '115660588583171786';
+
+    /**
+     * Current fake API state. Http::fake() stubs stack (first registered wins), so the stubs read this
+     * state lazily and fake() can be called again within a test to change the API responses.
+     *
+     * @var array{state: string, startTime: string, liveIds: list<string>}
+     */
+    private static array $fakeState = ['state' => 'unstarted', 'startTime' => '2026-10-15T18:00:00Z', 'liveIds' => []];
 
     /**
      * Fake getSchedule (one match with given state/start) and getLive (given ids in progress).
@@ -17,11 +26,13 @@ final class LolEsportsResponses
      */
     public static function fake(string $state = 'unstarted', string $startTime = '2026-10-15T18:00:00Z', array $liveIds = []): void
     {
+        self::$fakeState = ['state' => $state, 'startTime' => $startTime, 'liveIds' => $liveIds];
+
         Http::fake([
-            '*/getSchedule*' => Http::response(self::schedule([
-                self::scheduleEvent(['state' => $state, 'startTime' => $startTime]),
+            '*/getSchedule*' => fn (): PromiseInterface => Http::response(self::schedule([
+                self::scheduleEvent(['state' => self::$fakeState['state'], 'startTime' => self::$fakeState['startTime']]),
             ])),
-            '*/getLive*' => Http::response(self::live($liveIds)),
+            '*/getLive*' => fn (): PromiseInterface => Http::response(self::live(self::$fakeState['liveIds'])),
         ]);
     }
 
