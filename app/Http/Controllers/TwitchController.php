@@ -69,6 +69,7 @@ final class TwitchController extends Controller
             'favoriteStreamers' => $favoriteStreamerIds,
             'subscriptions' => $subscriptions,
             'scheduledStreams' => $scheduledStreams,
+            'pushEndpoints' => $user->pushSubscriptions()->pluck('endpoint'),
         ]);
     }
 

@@ -45,6 +45,7 @@ test('authenticated users can access twitch page', function (): void {
             ->has('favoriteStreamers')
             ->has('subscriptions')
             ->has('scheduledStreams')
+            ->has('pushEndpoints')
         );
 });
 

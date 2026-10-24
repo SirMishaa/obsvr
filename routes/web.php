@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\LolController;
 use App\Http\Controllers\PushSubscriptionController;
+use App\Http\Controllers\SendTestPushController;
 use App\Http\Controllers\SocialiteController;
 use App\Http\Controllers\TwitchController;
 use App\Http\Controllers\TwitchEventSubController;
@@ -55,6 +56,10 @@ Route::prefix('auth/{provider}')
 Route::post('push/subscribe', [PushSubscriptionController::class, '__invoke'])
     ->middleware(['auth', 'verified'])
     ->name('push.subscription');
+
+Route::post('push/test', SendTestPushController::class)
+    ->middleware(['auth', 'verified', 'throttle:6,1'])
+    ->name('push.test');
 
 Route::post('twitch/eventsub', [TwitchEventSubController::class, 'handle'])
     ->middleware(VerifyTwitchEventSubSignatureMiddleware::class)

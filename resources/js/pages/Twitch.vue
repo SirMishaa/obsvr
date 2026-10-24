@@ -2,14 +2,14 @@
 import { Head, router } from '@inertiajs/vue3';
 import { Clock, Eye, Star } from 'lucide-vue-next';
 import { computed, onMounted, ref } from 'vue';
+import PushStatusPopover from '@/components/PushStatusPopover.vue';
 import ScheduledStreamCard from '@/components/ScheduledStreamCard.vue';
 import StreamHistoryDialog from '@/components/StreamHistoryDialog.vue';
 import { useLang } from '@/composables/useLang';
 import AppLayout from '@/layouts/AppLayout.vue';
-import { subscription } from '@/routes/push';
 import { favorite } from '@/routes/twitch';
 import { type BreadcrumbItem, ScheduledStream } from '@/types';
-import { levenshteinDistance, urlBase64ToUint8Array } from '@/utils';
+import { levenshteinDistance } from '@/utils';
 
 interface FollowedStreamer {
     broadcasterId: string;
@@ -68,6 +68,8 @@ const props = defineProps<{
     favoriteStreamers: string[];
     subscriptions: TwitchEventSubSubscriptionItem[] | null;
     scheduledStreams?: ScheduledStream[];
+    /** Push endpoints the server has stored for the current user */
+    pushEndpoints: string[];
 }>();
 const countdown = ref<number>(120);
 const cacheBust = ref<string>('');
@@ -160,38 +162,6 @@ const formatRelativeDate = (startedAt: string) => {
     );
 };
 
-const enableWebPush = async () => {
-    const vapidPublicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY;
-    if (!vapidPublicKey) {
-        console.error('VITE_VAPID_PUBLIC_KEY is not defined');
-        return;
-    }
-
-    const perm = await Notification.requestPermission();
-    if (perm !== 'granted') console.warn('Permission not granted');
-    const reg = await navigator.serviceWorker.register('/service-worker.js');
-    if (!reg.pushManager) throw new Error('PushManager not supported');
-    const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-    });
-
-    router.post(
-        subscription.url(),
-        {
-            ...sub.toJSON(),
-        },
-        {
-            onFinish: (data) => {
-                console.log('Local subscription saved', data);
-            },
-            onError: (errors) => {
-                console.error('Error saving local subscription', errors);
-            },
-        },
-    );
-};
-
 const toggleFavoriteStreamerRework = async ({
     streamerId,
     streamerName,
@@ -277,22 +247,19 @@ const toggleFavoriteStreamerRework = async ({
 
         <div class="mt-6 flex items-center justify-between px-4">
             <div>
-                <h1
-                    class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
-                >
-                    Mes suivis en live
-                </h1>
+                <div class="flex items-center gap-2">
+                    <h1
+                        class="text-3xl font-bold tracking-tight text-gray-900 dark:text-white"
+                    >
+                        Mes suivis en live
+                    </h1>
+                    <PushStatusPopover :endpoints="props.pushEndpoints" />
+                </div>
                 <h2
                     class="text-base tracking-tight text-gray-900 dark:text-white"
                 >
                     Actualisation dans {{ countdown }} secondes
                 </h2>
-                <button
-                    @click="enableWebPush"
-                    class="mt-2 cursor-pointer rounded bg-gray-800 p-2 text-white"
-                >
-                    Activer notification
-                </button>
             </div>
             <input
                 type="text"

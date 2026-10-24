@@ -17,6 +17,7 @@ final class PushSubscriptionController extends Controller
             'endpoint' => ['required', 'string'],
             'keys.p256dh' => ['required', 'string'],
             'keys.auth' => ['required', 'string'],
+            'previousEndpoint' => ['nullable', 'string'],
         ]);
 
         $user = Auth::user();
@@ -29,6 +30,10 @@ final class PushSubscriptionController extends Controller
                 token: $validated['keys']['auth'],
                 contentEncoding: $request->header('Content-Encoding') ?? null
             );
+
+            if (isset($validated['previousEndpoint']) && $validated['previousEndpoint'] !== $validated['endpoint']) {
+                $user->deletePushSubscription($validated['previousEndpoint']);
+            }
 
             Log::debug(sprintf('Updating push subscription for user %s (%s)', $user->id, $user->email));
         }
