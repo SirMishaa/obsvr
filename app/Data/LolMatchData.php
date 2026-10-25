@@ -10,7 +10,7 @@ use Carbon\CarbonImmutable;
 final readonly class LolMatchData
 {
     /**
-     * @param  list<array{name: string, code: string, image: string}>  $teams
+     * @param  list<array{name: string, code: string, image: string, outcome: string|null, gameWins: int|null, homeLeague?: string|null}>  $teams
      */
     public function __construct(
         public string $id,
@@ -40,11 +40,7 @@ final readonly class LolMatchData
             state: self::string($event['state'] ?? null),
             blockName: $blockName !== '' ? $blockName : null,
             bestOf: is_int($bestOf) ? $bestOf : null,
-            teams: array_values(array_map(fn (mixed $team): array => [
-                'name' => self::string(is_array($team) ? $team['name'] ?? null : null, 'TBD'),
-                'code' => self::string(is_array($team) ? $team['code'] ?? null : null, 'TBD'),
-                'image' => (string) preg_replace('#^http://#', 'https://', self::string(is_array($team) ? $team['image'] ?? null : null)),
-            ], $teams)),
+            teams: array_values(array_map(self::team(...), $teams)),
         );
     }
 
@@ -62,6 +58,27 @@ final readonly class LolMatchData
     }
 
     /**
+     * Tag each team with the league it comes from (LCK, LEC...), looked up by team logo.
+     *
+     * @param  array<string, string>  $homeLeagues
+     */
+    public function withHomeLeagues(array $homeLeagues): self
+    {
+        return new self(
+            id: $this->id,
+            league: $this->league,
+            startTime: $this->startTime,
+            state: $this->state,
+            blockName: $this->blockName,
+            bestOf: $this->bestOf,
+            teams: array_map(fn (array $team): array => [
+                ...$team,
+                'homeLeague' => $team['code'] !== 'TBD' ? $homeLeagues[$team['image']] ?? null : null,
+            ], $this->teams),
+        );
+    }
+
+    /**
      * @return array<string, mixed>
      */
     public function toRow(): array
@@ -76,6 +93,25 @@ final readonly class LolMatchData
             'teams' => json_encode($this->teams, JSON_THROW_ON_ERROR),
             'created_at' => now()->toDateTimeString(),
             'updated_at' => now()->toDateTimeString(),
+        ];
+    }
+
+    /**
+     * @return array{name: string, code: string, image: string, outcome: string|null, gameWins: int|null}
+     */
+    private static function team(mixed $team): array
+    {
+        $team = is_array($team) ? $team : [];
+        $result = is_array($team['result'] ?? null) ? $team['result'] : [];
+        $outcome = $result['outcome'] ?? null;
+        $gameWins = $result['gameWins'] ?? null;
+
+        return [
+            'name' => self::string($team['name'] ?? null, 'TBD'),
+            'code' => self::string($team['code'] ?? null, 'TBD'),
+            'image' => (string) preg_replace('#^http://#', 'https://', self::string($team['image'] ?? null)),
+            'outcome' => in_array($outcome, ['win', 'loss'], true) ? $outcome : null,
+            'gameWins' => is_int($gameWins) ? $gameWins : null,
         ];
     }
 

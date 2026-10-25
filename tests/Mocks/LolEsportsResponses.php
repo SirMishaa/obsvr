@@ -33,6 +33,7 @@ final class LolEsportsResponses
                 self::scheduleEvent(['state' => self::$fakeState['state'], 'startTime' => self::$fakeState['startTime']]),
             ])),
             '*/getLive*' => fn (): PromiseInterface => Http::response(self::live(self::$fakeState['liveIds'])),
+            '*/getTeams*' => Http::response(self::teams([])),
         ]);
     }
 
@@ -67,6 +68,22 @@ final class LolEsportsResponses
     public static function schedule(array $events, ?string $newer = null): array
     {
         return ['data' => ['schedule' => ['pages' => ['older' => null, 'newer' => $newer], 'events' => $events]]];
+    }
+
+    /**
+     * getTeams payload; each team is [code, image, home league name, status].
+     *
+     * @param  list<array{0: string, 1: string, 2: string, 3?: string}>  $teams
+     * @return array<string, mixed>
+     */
+    public static function teams(array $teams): array
+    {
+        return ['data' => ['teams' => array_map(fn (array $team): array => [
+            'code' => $team[0],
+            'image' => $team[1],
+            'status' => $team[3] ?? 'active',
+            'homeLeague' => ['name' => $team[2], 'region' => 'EUROPE'],
+        ], $teams)]];
     }
 
     /**

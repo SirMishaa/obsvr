@@ -49,6 +49,29 @@ final readonly class LolEsportsClient
     }
 
     /**
+     * Home league name (LCK, LEC...) of every team, keyed by team logo url.
+     *
+     * @return array<string, string>
+     */
+    public function homeLeagues(): array
+    {
+        /** @var list<array<string, mixed>> $teams */
+        $teams = $this->request()->get('/getTeams', ['hl' => 'en-GB'])->json('data.teams', []);
+
+        $homeLeagues = [];
+        foreach ($teams as $team) {
+            $image = $team['image'] ?? null;
+            $homeLeague = is_array($team['homeLeague'] ?? null) ? $team['homeLeague']['name'] ?? null : null;
+
+            if (is_string($image) && $image !== '' && is_string($homeLeague) && ($team['status'] ?? null) !== 'archived') {
+                $homeLeagues[(string) preg_replace('#^http://#', 'https://', $image)] = $homeLeague;
+            }
+        }
+
+        return $homeLeagues;
+    }
+
+    /**
      * @return list<string>
      */
     public function live(): array

@@ -182,3 +182,17 @@ test('team chips come from recent matches of followed leagues only, latest name 
             ])
             ->where('leagues.3.teams', []));
 });
+
+test('page exposes the bracket of followed leagues only', function (): void {
+    $user = User::factory()->create();
+    LolLeagueSubscription::factory()->for($user)->create(['league' => LolLeague::Worlds]);
+    LolMatch::factory()->create(['block_name' => 'Swiss']);
+    LolMatch::factory()->create(['league' => LolLeague::Lck, 'block_name' => 'Playoffs']);
+
+    $this->actingAs($user)
+        ->get(route('lol'))
+        ->assertInertia(fn (AssertableInertia $page): AssertableInertia => $page
+            ->has('brackets', 1)
+            ->where('brackets.0.league', 'worlds')
+            ->where('brackets.0.sections.0.kind', 'swiss'));
+});

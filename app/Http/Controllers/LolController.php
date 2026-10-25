@@ -11,6 +11,7 @@ use App\Jobs\SyncLolScheduleJob;
 use App\Models\LolLeagueSubscription;
 use App\Models\LolMatch;
 use App\Models\User;
+use App\Services\LolBracketBuilder;
 use App\Services\LolMatchWatcher;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\RedirectResponse;
@@ -37,7 +38,7 @@ final class LolController extends Controller
         return back(status: 303);
     }
 
-    public function index(): Response
+    public function index(LolBracketBuilder $bracketBuilder): Response
     {
         /** @var User $user */
         $user = auth()->user();
@@ -62,6 +63,10 @@ final class LolController extends Controller
                 ];
             }, LolLeague::cases()),
             'upcomingMatches' => $this->upcomingMatches($subscriptions),
+            'brackets' => array_values(array_filter(array_map(
+                fn (LolLeague $league): ?array => $subscriptions->has($league->value) ? $bracketBuilder->build($league) : null,
+                LolLeague::cases(),
+            ))),
         ]);
     }
 

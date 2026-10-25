@@ -23,7 +23,7 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $state
  * @property string|null $block_name
  * @property int|null $best_of
- * @property list<array{name: string, code: string, image: string}> $teams
+ * @property list<array{name: string, code: string, image: string, outcome?: string|null, gameWins?: int|null, homeLeague?: string|null}> $teams
  * @property CarbonImmutable|null $watch_ended_at
  */
 #[Fillable([

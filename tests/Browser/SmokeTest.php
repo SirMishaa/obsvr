@@ -63,3 +63,30 @@ it('keeps a selected team that is no longer scheduled deselectable', function ()
         ->click('Save')
         ->assertSee('team codes field is required');
 });
+
+it('remembers the tree view and simulates swiss results until reset', function (): void {
+    $user = User::factory()->create();
+    LolLeagueSubscription::factory()->for($user)->create();
+    foreach ([['KC', 'G2'], ['T1', 'BLG'], ['GEN', 'TES'], ['HLE', 'DK']] as $index => [$winner, $loser]) {
+        LolMatch::factory()->startingAt(now()->subHours(10 - $index))->create([
+            'block_name' => 'Swiss',
+            'state' => 'completed',
+            'teams' => [
+                ['name' => $winner, 'code' => $winner, 'image' => '', 'outcome' => 'win', 'gameWins' => 1],
+                ['name' => $loser, 'code' => $loser, 'image' => '', 'outcome' => 'loss', 'gameWins' => 0],
+            ],
+        ]);
+    }
+    $this->actingAs($user);
+
+    visit('/lol')
+        ->click('Tree')
+        ->assertSee('Advances')
+        ->navigate('/lol')
+        ->assertSee('Advances')
+        ->click('button[data-pick="KC"]')
+        ->assertSeeIn('[data-test="swiss-advanced"]', 'KC')
+        ->click('Official results')
+        ->assertDontSeeIn('[data-test="swiss-advanced"]', 'KC')
+        ->assertNoJavaScriptErrors();
+});

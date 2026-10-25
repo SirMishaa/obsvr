@@ -14,19 +14,39 @@ use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Queue;
+use Pest\Expectation;
 use Tests\Mocks\LolEsportsResponses;
 
 test('sync fetches only subscribed leagues, stores matches and starts the tick', function (): void {
     $this->travelTo('2026-10-15 17:00:00');
     Queue::fake();
     LolLeagueSubscription::factory()->create(['league' => LolLeague::Worlds]);
-    Http::fake(['*/getSchedule*' => Http::response(LolEsportsResponses::schedule([LolEsportsResponses::scheduleEvent()]))]);
+    Http::fake([
+        '*/getSchedule*' => Http::response(LolEsportsResponses::schedule([LolEsportsResponses::scheduleEvent()])),
+        '*/getTeams*' => Http::response(LolEsportsResponses::teams([['KC', 'https://static.lolesports.com/teams/kc.png', 'LEC']])),
+    ]);
 
     new SyncLolScheduleJob()->handle(resolve(LolEsportsClient::class));
 
-    expect(LolMatch::query()->count())->toBe(1);
-    Http::assertSentCount(1);
+    expect(LolMatch::query()->sole()->teams)->sequence(
+        fn (Expectation $team): Expectation => $team->toMatchArray(['code' => 'C9', 'homeLeague' => null]),
+        fn (Expectation $team): Expectation => $team->toMatchArray(['code' => 'KC', 'homeLeague' => 'LEC']),
+    );
+    Http::assertSentCount(2);
     Queue::assertPushed(LolTickJob::class);
+});
+
+test('sync still stores matches when home leagues cannot be fetched', function (): void {
+    Queue::fake();
+    LolLeagueSubscription::factory()->create();
+    Http::fake([
+        '*/getSchedule*' => Http::response(LolEsportsResponses::schedule([LolEsportsResponses::scheduleEvent()])),
+        '*/getTeams*' => Http::response(status: 500),
+    ]);
+
+    new SyncLolScheduleJob()->handle(resolve(LolEsportsClient::class));
+
+    expect(LolMatch::query()->sole()->teams[0]['homeLeague'] ?? null)->toBeNull();
 });
 
 test('sync does not start the tick when no match is close', function (): void {

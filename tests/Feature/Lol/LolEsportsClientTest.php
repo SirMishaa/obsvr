@@ -28,13 +28,37 @@ test('schedule parses match events of a league', function (): void {
         ->and($matches[0]->blockName)->toBe('Play-Ins')
         ->and($matches[0]->bestOf)->toBe(5)
         ->and($matches[0]->teams)->toBe([
-            ['name' => 'Cloud9', 'code' => 'C9', 'image' => 'https://static.lolesports.com/teams/c9.png'],
-            ['name' => 'Karmine Corp', 'code' => 'KC', 'image' => 'https://static.lolesports.com/teams/kc.png'],
+            ['name' => 'Cloud9', 'code' => 'C9', 'image' => 'https://static.lolesports.com/teams/c9.png', 'outcome' => null, 'gameWins' => null],
+            ['name' => 'Karmine Corp', 'code' => 'KC', 'image' => 'https://static.lolesports.com/teams/kc.png', 'outcome' => null, 'gameWins' => null],
         ]);
 
     Http::assertSent(fn (Request $request): bool => $request->hasHeader('x-api-key', '0TvQnueqKa5mxJntVWt0w4LpLfEkrV1Ta8rQBb9Z')
         && $request['leagueId'] === '98767975604431411'
         && $request['hl'] === 'en-GB');
+});
+
+test('schedule keeps the result of completed matches', function (): void {
+    Http::fake([
+        '*/getSchedule*' => Http::response(LolEsportsResponses::schedule([
+            LolEsportsResponses::scheduleEvent(['state' => 'completed', 'match' => ['teams' => [
+                ['result' => ['outcome' => 'loss', 'gameWins' => 2]],
+                ['result' => ['outcome' => 'win', 'gameWins' => 3]],
+            ]]]),
+        ])),
+    ]);
+
+    $teams = resolve(LolEsportsClient::class)->schedule(LolLeague::Worlds)[0]->teams;
+
+    expect(array_map(fn (array $team): array => [$team['outcome'], $team['gameWins']], $teams))->toBe([['loss', 2], ['win', 3]]);
+});
+
+test('home leagues are keyed by https team logo and skip archived teams', function (): void {
+    Http::fake(['*/getTeams*' => Http::response(LolEsportsResponses::teams([
+        ['KC', 'http://static.lolesports.com/teams/kc.png', 'LEC'],
+        ['HLE', 'https://static.lolesports.com/teams/hle-old.png', 'LCK', 'archived'],
+    ]))]);
+
+    expect(resolve(LolEsportsClient::class)->homeLeagues())->toBe(['https://static.lolesports.com/teams/kc.png' => 'LEC']);
 });
 
 test('schedule follows the newer page until it covers the next day', function (): void {
