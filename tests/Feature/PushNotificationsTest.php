@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Models\User;
 use App\Notifications\PushTestNotification;
+use App\Notifications\TwitchStreamerStreamStartedNotification;
 use Illuminate\Support\Facades\Notification;
 
 test('guests cannot send a test push', function (): void {
@@ -52,4 +53,14 @@ test('a previous endpoint of another user is left untouched', function (): void 
         ->assertStatus(303);
 
     expect($otherUser->pushSubscriptions()->count())->toBe(1);
+});
+
+test('pushes are sent with high urgency so sleeping devices deliver them right away', function (): void {
+    $user = User::factory()->create();
+
+    foreach ([new TwitchStreamerStreamStartedNotification('Sardoche'), new PushTestNotification] as $notification) {
+        expect($notification->toWebPush($user, $notification)->getOptions())
+            ->toHaveKey('urgency', 'high')
+            ->toHaveKey('TTL');
+    }
 });

@@ -20,6 +20,8 @@ test('reminder push shows real minutes left, local start time and watch link', f
         ->and($message['data'])->toBe(['url' => 'https://twitch.tv/skyart'])
         ->and($message)->toHaveKey('actions.0.title', 'Watch on skyart')
         ->and($message)->toHaveKey('actions.0.action', 'https://twitch.tv/skyart');
+
+    expect($notification->toWebPush($subscription->user, $notification)->getOptions())->toHaveKey('urgency', 'high');
 });
 
 test('started push links to lolesports without costream', function (): void {

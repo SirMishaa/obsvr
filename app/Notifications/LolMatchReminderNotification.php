@@ -35,6 +35,7 @@ final class LolMatchReminderNotification extends Notification
             ->body($this->match->summary().' · '.$this->match->start_time->setTimezone('Europe/Brussels')->format('H:i'))
             ->icon($this->subscription->iconFor($this->match))
             ->data(['url' => $url])
-            ->action($this->subscription->watchLabel(), $url);
+            ->action($this->subscription->watchLabel(), $url)
+            ->options(['urgency' => 'high', 'TTL' => 3600]);
     }
 }

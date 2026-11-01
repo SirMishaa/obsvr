@@ -41,6 +41,7 @@ final class TwitchChannelUpdatedNotification extends Notification
                 )
             )
             ->data(['url' => (string) $url])
-            ->action(__('twitch.cta.view_stream'), (string) $url);
+            ->action(__('twitch.cta.view_stream'), (string) $url)
+            ->options(['urgency' => 'high', 'TTL' => 3600]);
     }
 }

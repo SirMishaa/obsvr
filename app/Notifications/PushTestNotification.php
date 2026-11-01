@@ -26,6 +26,7 @@ final class PushTestNotification extends Notification
         return new WebPushMessage()
             ->title(__('twitch.push_test.title'))
             ->body(sprintf('%s (%s)', __('twitch.push_test.body'), now('Europe/Brussels')->format('H:i:s')))
-            ->data(['type' => 'test', 'url' => route('twitch')]);
+            ->data(['type' => 'test', 'url' => route('twitch')])
+            ->options(['urgency' => 'high', 'TTL' => 60]);
     }
 }

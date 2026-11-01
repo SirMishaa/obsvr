@@ -34,6 +34,7 @@ final class LolMatchStartedNotification extends Notification
             ->body($this->match->summary())
             ->icon($this->subscription->iconFor($this->match))
             ->data(['url' => $url])
-            ->action($this->subscription->watchLabel(), $url);
+            ->action($this->subscription->watchLabel(), $url)
+            ->options(['urgency' => 'high', 'TTL' => 3600]);
     }
 }

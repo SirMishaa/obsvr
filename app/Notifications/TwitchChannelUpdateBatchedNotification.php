@@ -55,6 +55,7 @@ final class TwitchChannelUpdateBatchedNotification extends Notification
             ->title(__('twitch.stream_channel_updated', ['name' => $streamerName]))
             ->body($body)
             ->data(['url' => (string) $url])
-            ->action(__('twitch.cta.view_stream'), (string) $url);
+            ->action(__('twitch.cta.view_stream'), (string) $url)
+            ->options(['urgency' => 'high', 'TTL' => 3600]);
     }
 }
