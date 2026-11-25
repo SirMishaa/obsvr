@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Providers;
 
+use App\Support\OpenTelemetry\OtlpClientCertificate;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Log;
@@ -26,6 +27,7 @@ final class AppServiceProvider extends ServiceProvider
         }
 
         $this->registerOpenTelemetryLoggerFallback();
+        $this->materializeOtlpClientCertificate();
     }
 
     /**
@@ -74,6 +76,27 @@ final class AppServiceProvider extends ServiceProvider
      * Container::bind() drops the cached instance, so the real logger always wins
      * once it exists. Pre-boot entries still reach the other channels of the stack.
      */
+    /**
+     * Turn the base64 mTLS certificate and key from the environment into the
+     * files the OTLP exporter expects. Runs in register(): the OpenTelemetry
+     * package only builds its exporters when it boots.
+     */
+    private function materializeOtlpClientCertificate(): void
+    {
+        $certificate = config('opentelemetry.exporters.otlp.client_certificate_base64');
+        $key = config('opentelemetry.exporters.otlp.client_key_base64');
+
+        $paths = OtlpClientCertificate::materialize(
+            is_string($certificate) ? $certificate : null,
+            is_string($key) ? $key : null,
+            storage_path('framework/otel'),
+        );
+
+        foreach ($paths as $key => $path) {
+            config(["opentelemetry.exporters.otlp.{$key}" => $path]);
+        }
+    }
+
     private function registerOpenTelemetryLoggerFallback(): void
     {
         if ($this->app->bound(OpenTelemetryLoggerInterface::class)) {
